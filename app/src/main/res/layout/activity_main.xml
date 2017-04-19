@@ -151,4 +151,76 @@
                 android:text="No Data" />
         </LinearLayout>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="■ Motor" />
+
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/buttonRun"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Run"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/buttonStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="onClick"
+            android:text="Stop" />
+        <Button
+            android:id="@+id/buttonRight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Right"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/buttonLeft"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Left"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/buttonBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Back"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_weight="1"
+            android:text="■ Speed" />
+        <TextView
+            android:id="@+id/motorSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_weight="5" />
+    </LinearLayout>
+    <SeekBar
+        android:id="@+id/seekBarSpeed"
+        android:max="255"
+        android:progress="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 </LinearLayout>

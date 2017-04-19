@@ -61,6 +61,10 @@ public class BLEService extends Service {
             "com.example.bluetooth.le.ACCL_Y_DATA";
     public final static String ACCL_Z_DATA =
             "com.example.bluetooth.le.ACCL_Z_DATA";
+    public final static String MOTOR_DIRECTION =
+            "com.example.bluetooth.le.MOTOR_DIRECTION";
+    public final static String MOTOR_SPEED =
+            "com.example.bluetooth.le.MOTOR_SPEED";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
@@ -76,6 +80,10 @@ public class BLEService extends Service {
             UUID.fromString(gattAttributes.ACCL_Y_MEASUREMENT);
     public final static UUID UUID_ACCL_Z_MEASUREMENT =
             UUID.fromString(gattAttributes.ACCL_Z_MEASUREMENT);
+    public final static UUID UUID_MOTOR_DIRECTION =
+            UUID.fromString(gattAttributes.MOTOR_DIRECTION);
+    public final static UUID UUID_MOTOR_SPEED =
+            UUID.fromString(gattAttributes.MOTOR_SPEED);
 
     public class LocalBinder extends Binder {
         BLEService getService() {
@@ -289,6 +297,12 @@ public class BLEService extends Service {
         return b.order(order).getInt();
     }
 
+    public static byte[] convertIntByte(int v, ByteOrder order) {
+        ByteBuffer b = ByteBuffer.allocate(4);
+        b.order(order).putInt(v);
+        return b.array();
+    }
+
     /**
      * Retrieves a list of supported GATT services on the connected device. This should be
      * invoked only after {@code BluetoothGatt#discoverServices()} completes successfully.
@@ -328,5 +342,18 @@ public class BLEService extends Service {
             return;
         }
         mBluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+//        Log.i(TAG, "characteristic " + characteristic.toString());
+        if (characteristic == null) {
+            Log.d("characteristic null", "bb");
+        }
+        characteristic.setValue(convertIntByte(data,ByteOrder.BIG_ENDIAN));
+        mBluetoothGatt.writeCharacteristic(characteristic);
     }
 }
