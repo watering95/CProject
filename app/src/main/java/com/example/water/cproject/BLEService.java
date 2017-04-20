@@ -49,6 +49,8 @@ public class BLEService extends Service {
             "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE =
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
+    public final static String ACTION_DATA_WRITE =
+            "com.example.bluetooth.le.ACTION_DATA_WRITE";
     public final static String GYRO_X_DATA =
             "com.example.bluetooth.le.GYRO_X_DATA";
     public final static String GYRO_Y_DATA =
@@ -236,6 +238,13 @@ public class BLEService extends Service {
         }
 
         @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if( status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_DATA_WRITE);
+            }
+        }
+
+        @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
@@ -256,23 +265,17 @@ public class BLEService extends Service {
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
         if (UUID_GYRO_X_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(GYRO_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else if(UUID_GYRO_Y_MEASUREMENT.equals(characteristic.getUuid())) {
+        } else if(UUID_GYRO_Y_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(GYRO_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else if(UUID_GYRO_Z_MEASUREMENT.equals(characteristic.getUuid())) {
+        } else if(UUID_GYRO_Z_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(GYRO_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else if (UUID_ACCL_X_MEASUREMENT.equals(characteristic.getUuid())) {
+        } else if (UUID_ACCL_X_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(ACCL_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else if(UUID_ACCL_Y_MEASUREMENT.equals(characteristic.getUuid())) {
+        } else if(UUID_ACCL_Y_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(ACCL_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else if(UUID_ACCL_Z_MEASUREMENT.equals(characteristic.getUuid())) {
+        } else if(UUID_ACCL_Z_MEASUREMENT.equals(characteristic.getUuid())) {
             intent.putExtra(ACCL_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        }
-        else {
+        } else {
             // For all other profiles, writes the data formatted in HEX.
             final byte[] data = characteristic.getValue();
             if (data != null && data.length > 0) {
@@ -349,11 +352,16 @@ public class BLEService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-//        Log.i(TAG, "characteristic " + characteristic.toString());
+
         if (characteristic == null) {
             Log.d("characteristic null", "bb");
         }
-        characteristic.setValue(convertIntByte(data,ByteOrder.BIG_ENDIAN));
-        mBluetoothGatt.writeCharacteristic(characteristic);
+
+        characteristic.setValue(convertIntByte(data, ByteOrder.LITTLE_ENDIAN));
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        boolean success = false;
+        while(!success) {
+            success = mBluetoothGatt.writeCharacteristic(characteristic);
+        }
     }
 }

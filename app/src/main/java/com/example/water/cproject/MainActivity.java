@@ -109,8 +109,6 @@ public class MainActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mMachine.setRunSpeed(progress);
-                if(mMotorSpeedCharacteristic != null) mBLEService.writeCharacteristic(mMotorSpeedCharacteristic, progress);
-                mMotorSpeed.setText(String.valueOf(progress));
             }
 
             @Override
@@ -120,7 +118,10 @@ public class MainActivity extends Activity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                int progress;
+                progress = mMachine.getRunSpeed();
+                mMotorSpeed.setText(String.valueOf(progress));
+                if(mMotorSpeedCharacteristic != null) mBLEService.writeCharacteristic(mMotorSpeedCharacteristic, progress);
             }
         });
 
@@ -216,26 +217,27 @@ public class MainActivity extends Activity {
                 break;
             case R.id.buttonStop:
                 mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic,mMachine.MACHINE_STOP);
+                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 break;
             case R.id.buttonRight:
                 mMachine.setDirection(mMachine.MACHINE_RIGHT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic,mMachine.MACHINE_RIGHT);
+                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
                 break;
             case R.id.buttonLeft:
                 mMachine.setDirection(mMachine.MACHINE_LEFT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic,mMachine.MACHINE_LEFT);
+                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
                 break;
             case R.id.buttonBack:
                 mMachine.setDirection(mMachine.MACHINE_BACKWARD);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic,mMachine.MACHINE_BACKWARD);
+                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
                 break;
             default:
                 mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic,mMachine.MACHINE_STOP);
+                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 break;
         }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -434,6 +436,8 @@ public class MainActivity extends Activity {
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Select Genuino services and characteristics on the user interface.
                 selectGenuinoGattServices(mBLEService.getSupportedGattServices());
+            } else if (BLEService.ACTION_DATA_WRITE.equals(action)) {
+
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
                 float gx = mMachine.mGenuino.getGyroscope().getGx();
                 float gy = mMachine.mGenuino.getGyroscope().getGy();
@@ -571,6 +575,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BLEService.ACTION_DATA_WRITE);
         return intentFilter;
     }
 
