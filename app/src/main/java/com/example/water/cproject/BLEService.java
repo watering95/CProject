@@ -63,10 +63,6 @@ public class BLEService extends Service {
             "com.example.bluetooth.le.ACCL_Y_DATA";
     public final static String ACCL_Z_DATA =
             "com.example.bluetooth.le.ACCL_Z_DATA";
-    public final static String MOTOR_DIRECTION =
-            "com.example.bluetooth.le.MOTOR_DIRECTION";
-    public final static String MOTOR_SPEED =
-            "com.example.bluetooth.le.MOTOR_SPEED";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
@@ -234,13 +230,6 @@ public class BLEService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-            }
-        }
-
-        @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if( status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_DATA_WRITE);
             }
         }
 

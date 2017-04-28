@@ -436,8 +436,6 @@ public class MainActivity extends Activity {
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Select Genuino services and characteristics on the user interface.
                 selectGenuinoGattServices(mBLEService.getSupportedGattServices());
-            } else if (BLEService.ACTION_DATA_WRITE.equals(action)) {
-
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
                 float gx = mMachine.mGenuino.getGyroscope().getGx();
                 float gy = mMachine.mGenuino.getGyroscope().getGy();
@@ -524,26 +522,19 @@ public class MainActivity extends Activity {
                 uuid = gattCharacteristic.getUuid().toString();
                 if(uuid.equals(BLEService.UUID_GYRO_X_MEASUREMENT.toString())) {
                     mGyroXCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_GYRO_Y_MEASUREMENT.toString())) {
+                } else if(uuid.equals(BLEService.UUID_GYRO_Y_MEASUREMENT.toString())) {
                     mGyroYCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_GYRO_Z_MEASUREMENT.toString())) {
+                } else if(uuid.equals(BLEService.UUID_GYRO_Z_MEASUREMENT.toString())) {
                     mGyroZCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_ACCL_X_MEASUREMENT.toString())) {
+                } else if(uuid.equals(BLEService.UUID_ACCL_X_MEASUREMENT.toString())) {
                     mAcclXCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_ACCL_Y_MEASUREMENT.toString())) {
+                } else if(uuid.equals(BLEService.UUID_ACCL_Y_MEASUREMENT.toString())) {
                     mAcclYCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_ACCL_Z_MEASUREMENT.toString())) {
+                } else if(uuid.equals(BLEService.UUID_ACCL_Z_MEASUREMENT.toString())) {
                     mAcclZCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
+                } else if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
                     mMotorDirectionCharacteristic = gattCharacteristic;
-                }
-                else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
+                } else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
                     mMotorSpeedCharacteristic = gattCharacteristic;
                 }
 
@@ -575,7 +566,6 @@ public class MainActivity extends Activity {
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-        intentFilter.addAction(BLEService.ACTION_DATA_WRITE);
         return intentFilter;
     }
 
