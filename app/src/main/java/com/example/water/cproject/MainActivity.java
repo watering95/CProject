@@ -210,6 +210,7 @@ public class MainActivity extends Activity {
     }
 
     public void onClick(View v) {
+        if(!mMachine.mGenuino.getBLE().getConnectState()) return;
         switch(v.getId()) {
             case R.id.buttonRun:
                 mMachine.setDirection(mMachine.MACHINE_FORWARD);
@@ -572,12 +573,12 @@ public class MainActivity extends Activity {
     class BackThread extends Thread {
         public void run() {
             while(true) {
-                updateData(mGyroXCharacteristic);
-                updateData(mGyroYCharacteristic);
-                updateData(mGyroZCharacteristic);
-                updateData(mAcclXCharacteristic);
-                updateData(mAcclYCharacteristic);
-                updateData(mAcclZCharacteristic);
+//                updateData(mGyroXCharacteristic);
+//                updateData(mGyroYCharacteristic);
+//                updateData(mGyroZCharacteristic);
+//                updateData(mAcclXCharacteristic);
+//                updateData(mAcclYCharacteristic);
+//                updateData(mAcclZCharacteristic);
             }
         }
 

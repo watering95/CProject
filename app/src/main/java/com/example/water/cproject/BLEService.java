@@ -333,7 +333,7 @@ public class BLEService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        mBluetoothGatt.readCharacteristic(characteristic);
+        if(mConnectionState == STATE_CONNECTED) mBluetoothGatt.readCharacteristic(characteristic);
     }
 
     public void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
@@ -344,13 +344,19 @@ public class BLEService extends Service {
 
         if (characteristic == null) {
             Log.d("characteristic null", "bb");
+            return;
+        }
+        if (mConnectionState != STATE_CONNECTED) {
+            return;
         }
 
         characteristic.setValue(convertIntByte(data, ByteOrder.LITTLE_ENDIAN));
         characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         boolean success = false;
-        while(!success) {
+        int i=0;
+        while(!success || i > 5) {
             success = mBluetoothGatt.writeCharacteristic(characteristic);
+            i++;
         }
     }
 }
