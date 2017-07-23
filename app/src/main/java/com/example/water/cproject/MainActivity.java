@@ -45,12 +45,6 @@ public class MainActivity extends Activity {
     private BluetoothLeScanner mBLEScanner;
     private BLEService mBLEService;
     private BluetoothGattCharacteristic mNotifyCharacteristic;
-    private BluetoothGattCharacteristic mGyroXCharacteristic;
-    private BluetoothGattCharacteristic mGyroYCharacteristic;
-    private BluetoothGattCharacteristic mGyroZCharacteristic;
-    private BluetoothGattCharacteristic mAcclXCharacteristic;
-    private BluetoothGattCharacteristic mAcclYCharacteristic;
-    private BluetoothGattCharacteristic mAcclZCharacteristic;
     private BluetoothGattCharacteristic mMotorDirectionCharacteristic;
     private BluetoothGattCharacteristic mMotorSpeedCharacteristic;
 
@@ -64,12 +58,6 @@ public class MainActivity extends Activity {
     private TextView mDeviceName;
     private TextView mDeviceAddress;
     private TextView mDeviceStatus;
-    private TextView mGyroGx;
-    private TextView mGyroGy;
-    private TextView mGyroGz;
-    private TextView mAcclAx;
-    private TextView mAcclAy;
-    private TextView mAcclAz;
     private TextView mMotorSpeed;
 
     private final String LIST_NAME = "NAME";
@@ -95,12 +83,6 @@ public class MainActivity extends Activity {
         mDeviceName = (TextView) findViewById(R.id.deviceName);
         mDeviceAddress  = (TextView) findViewById(R.id.deviceAddress);
         mDeviceStatus = (TextView) findViewById(R.id.deviceStatus);
-        mGyroGx  = (TextView) findViewById(R.id.gyroGx);
-        mGyroGy  = (TextView) findViewById(R.id.gyroGy);
-        mGyroGz  = (TextView) findViewById(R.id.gyroGz);
-        mAcclAx  = (TextView) findViewById(R.id.acclAx);
-        mAcclAy  = (TextView) findViewById(R.id.acclAy);
-        mAcclAz  = (TextView) findViewById(R.id.acclAz);
         mMotorSpeed = (TextView) findViewById(R.id.motorSpeed);
 
         SeekBar sb = (SeekBar) findViewById(R.id.seekBarSpeed);
@@ -438,48 +420,13 @@ public class MainActivity extends Activity {
                 // Select Genuino services and characteristics on the user interface.
                 selectGenuinoGattServices(mBLEService.getSupportedGattServices());
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
-                float gx = mMachine.mGenuino.getGyroscope().getGx();
-                float gy = mMachine.mGenuino.getGyroscope().getGy();
-                float gz = mMachine.mGenuino.getGyroscope().getGz();
-                float ax = mMachine.mGenuino.getAccelerometer().getAx();
-                float ay = mMachine.mGenuino.getAccelerometer().getAy();
-                float az = mMachine.mGenuino.getAccelerometer().getAz();
 
-                if(intent.getStringExtra(BLEService.GYRO_X_DATA) != null) {
-                    gx = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_X_DATA));
-                }
-                if(intent.getStringExtra(BLEService.GYRO_Y_DATA) != null) {
-                    gy = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_Y_DATA));
-                }
-                if(intent.getStringExtra(BLEService.GYRO_Z_DATA) != null) {
-                    gz = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_Z_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_X_DATA) != null) {
-                    ax = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_X_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_Y_DATA) != null) {
-                    ay = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_Y_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_Z_DATA) != null) {
-                    az = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_Z_DATA));
-                }
-
-                mMachine.mGenuino.getGyroscope().updateData(gx, gy, gz);
-                mMachine.mGenuino.getAccelerometer().updateData(ax, ay, az);
-
-                displayData(mMachine.mGenuino.getGyroscope().getData());
-                displayData(mMachine.mGenuino.getAccelerometer().getData());
             }
         }
     };
 
     private void clearUI() {
-        mGyroGx.setText(R.string.no_data);
-        mGyroGy.setText(R.string.no_data);
-        mGyroGz.setText(R.string.no_data);
-        mAcclAx.setText(R.string.no_data);
-        mAcclAy.setText(R.string.no_data);
-        mAcclAz.setText(R.string.no_data);
+
     }
 
     private void updateConnectionState(final int resourceId) {
@@ -521,19 +468,7 @@ public class MainActivity extends Activity {
                 charas.add(gattCharacteristic);
                 HashMap<String, String> currentCharaData = new HashMap<String, String>();
                 uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(BLEService.UUID_GYRO_X_MEASUREMENT.toString())) {
-                    mGyroXCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_GYRO_Y_MEASUREMENT.toString())) {
-                    mGyroYCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_GYRO_Z_MEASUREMENT.toString())) {
-                    mGyroZCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_X_MEASUREMENT.toString())) {
-                    mAcclXCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_Y_MEASUREMENT.toString())) {
-                    mAcclYCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_Z_MEASUREMENT.toString())) {
-                    mAcclZCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
+                if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
                     mMotorDirectionCharacteristic = gattCharacteristic;
                 } else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
                     mMotorSpeedCharacteristic = gattCharacteristic;
@@ -549,18 +484,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void displayData(Gyroscope gyro) {
-        mGyroGx.setText(String.valueOf(gyro.getGx()));
-        mGyroGy.setText(String.valueOf(gyro.getGy()));
-        mGyroGz.setText(String.valueOf(gyro.getGz()));
-    }
-
-    private void displayData(Accelerometer accl) {
-        mAcclAx.setText(String.valueOf(accl.getAx()));
-        mAcclAy.setText(String.valueOf(accl.getAy()));
-        mAcclAz.setText(String.valueOf(accl.getAz()));
-    }
-
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
@@ -573,12 +496,7 @@ public class MainActivity extends Activity {
     class BackThread extends Thread {
         public void run() {
             while(true) {
-//                updateData(mGyroXCharacteristic);
-//                updateData(mGyroYCharacteristic);
-//                updateData(mGyroZCharacteristic);
-//                updateData(mAcclXCharacteristic);
-//                updateData(mAcclYCharacteristic);
-//                updateData(mAcclZCharacteristic);
+
             }
         }
 
