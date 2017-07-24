@@ -12,7 +12,7 @@
     <string name="menu_stop">Stop</string>
     <string name="menu_connect">Connect</string>
     <string name="menu_disconnect">Disconnect</string>
-    <string name="ble_scanning">Scanning Genuino101 BLE</string>
-    <string name="ble_stopscan">Stop Genuino101 BLE scan</string>
-    <string name="ble_scan_finish">Finish Genuino101 BLE scan</string>
+    <string name="ble_scanning">Scanning Genuino101</string>
+    <string name="ble_stopscan">Stopped scanning</string>
+    <string name="ble_scan_finish">Scan complete</string>
 </resources>

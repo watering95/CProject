@@ -59,6 +59,7 @@ public class MainActivity extends Activity {
     private TextView mDeviceAddress;
     private TextView mDeviceStatus;
     private TextView mMotorSpeed;
+    private TextView mMotorState;
 
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
@@ -84,6 +85,10 @@ public class MainActivity extends Activity {
         mDeviceAddress  = (TextView) findViewById(R.id.deviceAddress);
         mDeviceStatus = (TextView) findViewById(R.id.deviceStatus);
         mMotorSpeed = (TextView) findViewById(R.id.motorSpeed);
+        mMotorState = (TextView) findViewById(R.id.motorState);
+
+        mMotorSpeed.setText("0");
+        mMotorState.setText("Stop");
 
         SeekBar sb = (SeekBar) findViewById(R.id.seekBarSpeed);
 
@@ -197,22 +202,27 @@ public class MainActivity extends Activity {
             case R.id.buttonRun:
                 mMachine.setDirection(mMachine.MACHINE_FORWARD);
                 mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_FORWARD);
+                mMotorState.setText("Run");
                 break;
             case R.id.buttonStop:
                 mMachine.setDirection(mMachine.MACHINE_STOP);
                 mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
+                mMotorState.setText("Stop");
                 break;
             case R.id.buttonRight:
                 mMachine.setDirection(mMachine.MACHINE_RIGHT);
                 mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
+                mMotorState.setText("Right");
                 break;
             case R.id.buttonLeft:
                 mMachine.setDirection(mMachine.MACHINE_LEFT);
                 mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
+                mMotorState.setText("Left");
                 break;
             case R.id.buttonBack:
                 mMachine.setDirection(mMachine.MACHINE_BACKWARD);
                 mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
+                mMotorState.setText("Back");
                 break;
             default:
                 mMachine.setDirection(mMachine.MACHINE_STOP);
