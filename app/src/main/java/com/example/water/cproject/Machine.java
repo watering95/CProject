@@ -71,6 +71,7 @@ public class Machine {
             Log.d(TAG, "Connect request result=" + result);
             return result;
         }
+        return false;
     }
 
     public void commDisconnect() {
@@ -78,8 +79,8 @@ public class Machine {
     }
 
     public void bindService() {
-        Intent gattServiceIntent = new Intent(this, BLEService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        Intent gattServiceIntent = new Intent(mContext, BLEService.class);
+        mContext.bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
     public void registerGattReceiver(BroadcastReceiver gattUpdateReceiver) {
