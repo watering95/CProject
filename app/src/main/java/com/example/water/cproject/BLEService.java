@@ -28,19 +28,6 @@ import static android.content.ContentValues.TAG;
 
 public class BLEService extends Service {
 
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothGatt mBluetoothGatt;
-
-    private String mBluetoothDeviceAddress;
-    private int mConnectionState = STATE_DISCONNECTED;
-
-    private final IBinder mBinder = new LocalBinder();
-
-    private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
-    private static final int STATE_CONNECTED = 2;
-
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
@@ -83,6 +70,27 @@ public class BLEService extends Service {
     public final static UUID UUID_MOTOR_SPEED =
             UUID.fromString(gattAttributes.MOTOR_SPEED);
 
+    private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothGatt mBluetoothGatt;
+
+    private String mBluetoothDeviceAddress;
+    private int mConnectionState = STATE_DISCONNECTED;
+
+    private final IBinder mBinder = new LocalBinder();
+
+    private static final int STATE_DISCONNECTED = 0;
+    private static final int STATE_CONNECTING = 1;
+    private static final int STATE_CONNECTED = 2;
+
+    @Override
+    public void onCreate(){
+    }
+
+    @Override
+    public void onDestroy() {
+    }
+
     public class LocalBinder extends Binder {
         BLEService getService() {
             return BLEService.this;
@@ -92,14 +100,6 @@ public class BLEService extends Service {
     @Override
     public IBinder onBind(Intent intent){
         return mBinder;
-    }
-
-    @Override
-    public void onCreate(){
-    }
-
-    @Override
-    public void onDestroy() {
     }
 
     /**
@@ -196,6 +196,71 @@ public class BLEService extends Service {
         mBluetoothGatt = null;
     }
 
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+    }
+
+    /**
+     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
+     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
+     * callback.
+     *
+     * @param characteristic The characteristic to read from.
+     */
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        if(mConnectionState == STATE_CONNECTED) mBluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        if (characteristic == null) {
+            Log.d("characteristic null", "bb");
+            return;
+        }
+        if (mConnectionState != STATE_CONNECTED) {
+            return;
+        }
+
+        characteristic.setValue(convertIntByte(data, ByteOrder.LITTLE_ENDIAN));
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        boolean success = false;
+        int i=0;
+        while(!success || i > 5) {
+            success = mBluetoothGatt.writeCharacteristic(characteristic);
+            i++;
+        }
+    }
+
+    /**
+     * Retrieves a list of supported GATT services on the connected device. This should be
+     * invoked only after {@code BluetoothGatt#discoverServices()} completes successfully.
+     *
+     * @return A {@code List} of supported services.
+     */
+    public List<BluetoothGattService> getSupportedGattServices() {
+        if (mBluetoothGatt == null) return null;
+
+        return mBluetoothGatt.getServices();
+    }
+
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -277,86 +342,21 @@ public class BLEService extends Service {
         sendBroadcast(intent);
     }
 
-    public static float changeFloatByteOrder(byte[] v, ByteOrder order) {
+    private static float changeFloatByteOrder(byte[] v, ByteOrder order) {
         ByteBuffer b = ByteBuffer.allocate(4);
         b.put(v).flip();
         return b.order(order).getFloat();
     }
 
-    public static int changeIntByteOrder(byte[] v, ByteOrder order) {
+    private static int changeIntByteOrder(byte[] v, ByteOrder order) {
         ByteBuffer b = ByteBuffer.allocate(4);
         b.put(v).flip();
         return b.order(order).getInt();
     }
 
-    public static byte[] convertIntByte(int v, ByteOrder order) {
+    private static byte[] convertIntByte(int v, ByteOrder order) {
         ByteBuffer b = ByteBuffer.allocate(4);
         b.order(order).putInt(v);
         return b.array();
-    }
-
-    /**
-     * Retrieves a list of supported GATT services on the connected device. This should be
-     * invoked only after {@code BluetoothGatt#discoverServices()} completes successfully.
-     *
-     * @return A {@code List} of supported services.
-     */
-    public List<BluetoothGattService> getSupportedGattServices() {
-        if (mBluetoothGatt == null) return null;
-
-        return mBluetoothGatt.getServices();
-    }
-
-    /**
-     * Enables or disables notification on a give characteristic.
-     *
-     * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
-     */
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-    }
-
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
-     *
-     * @param characteristic The characteristic to read from.
-     */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        if(mConnectionState == STATE_CONNECTED) mBluetoothGatt.readCharacteristic(characteristic);
-    }
-
-    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-
-        if (characteristic == null) {
-            Log.d("characteristic null", "bb");
-            return;
-        }
-        if (mConnectionState != STATE_CONNECTED) {
-            return;
-        }
-
-        characteristic.setValue(convertIntByte(data, ByteOrder.LITTLE_ENDIAN));
-        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-        boolean success = false;
-        int i=0;
-        while(!success || i > 5) {
-            success = mBluetoothGatt.writeCharacteristic(characteristic);
-            i++;
-        }
     }
 }

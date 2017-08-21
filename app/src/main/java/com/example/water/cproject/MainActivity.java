@@ -4,8 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -13,18 +11,13 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,21 +25,13 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import static android.content.ContentValues.TAG;
 
 public class MainActivity extends Activity {
     private Handler mHandler;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBLEScanner;
-    private BLEService mBLEService;
-    private BluetoothGattCharacteristic mNotifyCharacteristic;
-    private BluetoothGattCharacteristic mMotorDirectionCharacteristic;
-    private BluetoothGattCharacteristic mMotorSpeedCharacteristic;
 
     private ScanSettings settings;
     private List<ScanFilter> filters;
@@ -61,8 +46,6 @@ public class MainActivity extends Activity {
     private TextView mMotorSpeed;
     private TextView mMotorState;
 
-    private final String LIST_NAME = "NAME";
-    private final String LIST_UUID = "UUID";
     private final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
 
     private static final int REQUEST_ENABLE_BT = 1;
@@ -70,17 +53,13 @@ public class MainActivity extends Activity {
     private static final long SCAN_PERIOD = 10000;
     private String mServiceAddress;
 
-    private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mMachine = new Machine();
+        mMachine = new Machine(this);
         mHandler = new Handler();
-        mBLEService = new BLEService();
-
         mDeviceName = (TextView) findViewById(R.id.deviceName);
         mDeviceAddress  = (TextView) findViewById(R.id.deviceAddress);
         mDeviceStatus = (TextView) findViewById(R.id.deviceStatus);
@@ -108,7 +87,7 @@ public class MainActivity extends Activity {
                 int progress;
                 progress = mMachine.getRunSpeed();
                 mMotorSpeed.setText(String.valueOf(progress));
-                if(mMotorSpeedCharacteristic != null) mBLEService.writeCharacteristic(mMotorSpeedCharacteristic, progress);
+                mMachine.setRunSpeed(progress);
             }
         });
 
@@ -167,10 +146,6 @@ public class MainActivity extends Activity {
             finish();
             return;
         }
-
-        BackThread thread = new BackThread();
-        thread.setDaemon(true);
-        thread.start();
     }
 
     @Override
@@ -191,42 +166,40 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-
-        Intent gattServiceIntent = new Intent(this, BLEService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        mMachine.bindService();
     }
 
     public void onClick(View v) {
         if(!mMachine.mGenuino.getBLE().getConnectState()) return;
         switch(v.getId()) {
             case R.id.buttonRun:
-                mMachine.setDirection(mMachine.MACHINE_FORWARD);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_FORWARD);
+                mMachine.action(mMachine.MACHINE_FORWARD);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_FORWARD);
                 mMotorState.setText("Run");
                 break;
             case R.id.buttonStop:
-                mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
+                mMachine.action(mMachine.MACHINE_STOP);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 mMotorState.setText("Stop");
                 break;
             case R.id.buttonRight:
-                mMachine.setDirection(mMachine.MACHINE_RIGHT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
+                mMachine.action(mMachine.MACHINE_RIGHT);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
                 mMotorState.setText("Right");
                 break;
             case R.id.buttonLeft:
-                mMachine.setDirection(mMachine.MACHINE_LEFT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
+                mMachine.action(mMachine.MACHINE_LEFT);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
                 mMotorState.setText("Left");
                 break;
             case R.id.buttonBack:
-                mMachine.setDirection(mMachine.MACHINE_BACKWARD);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
+                mMachine.action(mMachine.MACHINE_BACKWARD);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
                 mMotorState.setText("Back");
                 break;
             default:
-                mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
+                mMachine.action(mMachine.MACHINE_STOP);
+//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 break;
         }
     }
@@ -279,14 +252,14 @@ public class MainActivity extends Activity {
                 scanBLEDevice(true);
                 break;
             case R.id.menu_stop:
-                mBLEService.disconnect();
+                mMachine.commDisconnect();
                 scanBLEDevice(false);
                 break;
             case R.id.menu_connect:
-                mBLEService.connect(mServiceAddress);
+                mMachine.commConnect(mServiceAddress);
                 break;
             case R.id.menu_disconnect:
-                mBLEService.disconnect();
+                mMachine.commDisconnect();
                 break;
         }
         return true;
@@ -295,12 +268,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
-        if (mBLEService != null) {
-            final boolean result = mBLEService.connect(mServiceAddress);
-            Log.d(TAG, "Connect request result=" + result);
-        }
+        mMachine.registerGattReceiver(mGattUpdateReceiver);
+        mMachine.commConnect(mServiceAddress);
 
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
@@ -389,24 +358,6 @@ public class MainActivity extends Activity {
         }
     };
 
-    private ServiceConnection mServiceConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service){
-            mBLEService = ((BLEService.LocalBinder) service).getService();
-            if (!mBLEService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                finish();
-            }
-            // Automatically connects to the device upon successful start-up initialization.
-            mBLEService.connect(mServiceAddress);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0){
-        }
-    };
-
     // Handles various events fired by the Service.
     // ACTION_GATT_CONNECTED: connected to a GATT server.
     // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
@@ -424,20 +375,15 @@ public class MainActivity extends Activity {
             } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mMachine.mGenuino.getBLE().setDisconnect();
                 updateConnectionState(R.string.ble_disconnected);
-                clearUI();
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Select Genuino services and characteristics on the user interface.
-                selectGenuinoGattServices(mBLEService.getSupportedGattServices());
+                mMachine.selectMachineGattServices();
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
 
             }
         }
     };
-
-    private void clearUI() {
-
-    }
 
     private void updateConnectionState(final int resourceId) {
         runOnUiThread(new Runnable() {
@@ -446,88 +392,5 @@ public class MainActivity extends Activity {
                 mDeviceStatus.setText(resourceId);
             }
         });
-    }
-
-    // Demonstrates how to iterate through the supported GATT Services/Characteristics.
-    // In this sample, we populate the data structure that is bound to the ExpandableListView
-    // on the UI.
-    private void selectGenuinoGattServices(List<BluetoothGattService> gattServices) {
-        if (gattServices == null) return;
-        String uuid = null;
-        String unknownServiceString = getResources().getString(R.string.ble_unknown_service);
-        String unknownCharaString = getResources().getString(R.string.ble_unknown_characteristic);
-        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<HashMap<String, String>>();
-        ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
-                = new ArrayList<ArrayList<HashMap<String, String>>>();
-        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
-
-        // Loops through available GATT Services.
-        for (BluetoothGattService gattService : gattServices) {
-            HashMap<String, String> currentServiceData = new HashMap<String, String>();
-            uuid = gattService.getUuid().toString();
-            currentServiceData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownServiceString));
-            currentServiceData.put(LIST_UUID, uuid);
-            gattServiceData.add(currentServiceData);
-
-            ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<HashMap<String, String>>();
-            List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
-            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<BluetoothGattCharacteristic>();
-
-            // Loops through available Characteristics.
-            for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-                charas.add(gattCharacteristic);
-                HashMap<String, String> currentCharaData = new HashMap<String, String>();
-                uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
-                    mMotorDirectionCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
-                    mMotorSpeedCharacteristic = gattCharacteristic;
-                }
-
-                currentCharaData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownCharaString));
-                currentCharaData.put(LIST_UUID, uuid);
-                gattCharacteristicGroupData.add(currentCharaData);
-            }
-
-            mGattCharacteristics.add(charas);
-            gattCharacteristicData.add(gattCharacteristicGroupData);
-        }
-    }
-
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
-    }
-
-    class BackThread extends Thread {
-        public void run() {
-            while(true) {
-
-            }
-        }
-
-        void updateData(BluetoothGattCharacteristic characteristic) {
-            if (characteristic != null) {
-                final int charaProp = characteristic.getProperties();
-
-                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-                    // If there is an active notification on a characteristic, clear
-                    // it first so it doesn't update the data field on the user interface.
-                    if (mNotifyCharacteristic != null) {
-                        mBLEService.setCharacteristicNotification(mNotifyCharacteristic, false);
-                        mNotifyCharacteristic = null;
-                    }
-                    mBLEService.readCharacteristic(characteristic);
-                }
-                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-                    mNotifyCharacteristic = characteristic;
-                    mBLEService.setCharacteristicNotification(characteristic, true);
-                }
-            }
-        }
     }
 }
