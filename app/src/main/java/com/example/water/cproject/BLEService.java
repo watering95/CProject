@@ -18,7 +18,6 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.UUID;
 
 import static android.content.ContentValues.TAG;
 
@@ -38,37 +37,6 @@ public class BLEService extends Service {
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String ACTION_DATA_WRITE =
             "com.example.bluetooth.le.ACTION_DATA_WRITE";
-    public final static String GYRO_X_DATA =
-            "com.example.bluetooth.le.GYRO_X_DATA";
-    public final static String GYRO_Y_DATA =
-            "com.example.bluetooth.le.GYRO_Y_DATA";
-    public final static String GYRO_Z_DATA =
-            "com.example.bluetooth.le.GYRO_Z_DATA";
-    public final static String ACCL_X_DATA =
-            "com.example.bluetooth.le.ACCL_X_DATA";
-    public final static String ACCL_Y_DATA =
-            "com.example.bluetooth.le.ACCL_Y_DATA";
-    public final static String ACCL_Z_DATA =
-            "com.example.bluetooth.le.ACCL_Z_DATA";
-    public final static String EXTRA_DATA =
-            "com.example.bluetooth.le.EXTRA_DATA";
-
-    public final static UUID UUID_GYRO_X_MEASUREMENT =
-            UUID.fromString(gattAttributes.GYRO_X_MEASUREMENT);
-    public final static UUID UUID_GYRO_Y_MEASUREMENT =
-            UUID.fromString(gattAttributes.GYRO_Y_MEASUREMENT);
-    public final static UUID UUID_GYRO_Z_MEASUREMENT =
-            UUID.fromString(gattAttributes.GYRO_Z_MEASUREMENT);
-    public final static UUID UUID_ACCL_X_MEASUREMENT =
-            UUID.fromString(gattAttributes.ACCL_X_MEASUREMENT);
-    public final static UUID UUID_ACCL_Y_MEASUREMENT =
-            UUID.fromString(gattAttributes.ACCL_Y_MEASUREMENT);
-    public final static UUID UUID_ACCL_Z_MEASUREMENT =
-            UUID.fromString(gattAttributes.ACCL_Z_MEASUREMENT);
-    public final static UUID UUID_MOTOR_DIRECTION =
-            UUID.fromString(gattAttributes.MOTOR_DIRECTION);
-    public final static UUID UUID_MOTOR_SPEED =
-            UUID.fromString(gattAttributes.MOTOR_SPEED);
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -312,49 +280,14 @@ public class BLEService extends Service {
     private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
 
         final Intent intent = new Intent(action);
-        int format = -1;
 
         // This is special handling for the Heart Rate Measurement profile.  Data parsing is
         // carried out as per profile specifications:
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_GYRO_X_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(GYRO_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_GYRO_Y_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(GYRO_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_GYRO_Z_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(GYRO_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if (UUID_ACCL_X_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(ACCL_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_ACCL_Y_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(ACCL_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_ACCL_Z_MEASUREMENT.equals(characteristic.getUuid())) {
-            intent.putExtra(ACCL_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
-        }
-        sendBroadcast(intent);
+        sendBroadcast(gattAttributes.intentPutExtra(intent,characteristic));
     }
 
-    private static float changeFloatByteOrder(byte[] v, ByteOrder order) {
-        ByteBuffer b = ByteBuffer.allocate(4);
-        b.put(v).flip();
-        return b.order(order).getFloat();
-    }
-
-    private static int changeIntByteOrder(byte[] v, ByteOrder order) {
-        ByteBuffer b = ByteBuffer.allocate(4);
-        b.put(v).flip();
-        return b.order(order).getInt();
-    }
-
-    private static byte[] convertIntByte(int v, ByteOrder order) {
+    private byte[] convertIntByte(int v, ByteOrder order) {
         ByteBuffer b = ByteBuffer.allocate(4);
         b.order(order).putInt(v);
         return b.array();

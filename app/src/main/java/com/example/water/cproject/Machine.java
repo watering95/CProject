@@ -23,15 +23,15 @@ import static android.content.Context.BIND_AUTO_CREATE;
  * Created by water on 2017-04-19.
  */
 
-public class Machine {
+class Machine {
 
-    public int MACHINE_FORWARD = 1;
-    public int MACHINE_BACKWARD = 4;
-    public int MACHINE_LEFT = 3;
-    public int MACHINE_RIGHT = 2;
-    public int MACHINE_STOP = 0;
+    int MACHINE_FORWARD = 1;
+    int MACHINE_BACKWARD = 4;
+    int MACHINE_LEFT = 3;
+    int MACHINE_RIGHT = 2;
+    int MACHINE_STOP = 0;
 
-    public Genuino101 mGenuino;
+    Genuino101 mGenuino;
 
     private BLEService mCommService;
     private Context mContext;
@@ -39,12 +39,15 @@ public class Machine {
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
     private int mRunSpeed;
+    private int mLeftSpeed;
+    private int mRightSpeed;
     private int mDirection;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     private BluetoothGattCharacteristic mMotorDirectionCharacteristic;
-    private BluetoothGattCharacteristic mMotorSpeedCharacteristic;
+    private BluetoothGattCharacteristic mMotorLeftSpeedCharacteristic;
+    private BluetoothGattCharacteristic mMotorRightSpeedCharacteristic;
 
-    public Machine(Context context) {
+    Machine(Context context) {
         mContext = context;
         mRunSpeed = 0;
         mDirection = MACHINE_STOP;
@@ -52,20 +55,29 @@ public class Machine {
         mCommService = new BLEService();
     }
 
-    public void setRunSpeed(int speed) {
+    void setRunSpeed(int speed) {
         mRunSpeed = speed;
-        if(mMotorSpeedCharacteristic != null) mCommService.writeCharacteristic(mMotorSpeedCharacteristic, mRunSpeed);
     }
 
-    public int getRunSpeed() {
+    void setLeftSpeed(int speed) {
+        mLeftSpeed = mRunSpeed + speed;
+    }
+
+    void setRightSpeed(int speed) {
+        mRightSpeed = mRunSpeed + speed;
+    }
+
+    int getRunSpeed() {
         return mRunSpeed;
     }
 
-    public void action(int direction) {
-        mCommService.writeCharacteristic(mMotorDirectionCharacteristic, direction);
+    void action(int direction) {
+        if(mMotorLeftSpeedCharacteristic != null) mCommService.writeCharacteristic(mMotorLeftSpeedCharacteristic, mLeftSpeed);
+        if(mMotorLeftSpeedCharacteristic != null) mCommService.writeCharacteristic(mMotorRightSpeedCharacteristic, mRightSpeed);
+        if(mMotorDirectionCharacteristic != null) mCommService.writeCharacteristic(mMotorDirectionCharacteristic, direction);
     }
 
-    public boolean commConnect(String address) {
+    boolean commConnect(String address) {
         if (mCommService != null) {
             final boolean result = mCommService.connect(address);
             Log.d(TAG, "Connect request result=" + result);
@@ -74,20 +86,20 @@ public class Machine {
         return false;
     }
 
-    public void commDisconnect() {
+    void commDisconnect() {
         mCommService.disconnect();
     }
 
-    public void bindService() {
+    void bindService() {
         Intent gattServiceIntent = new Intent(mContext, BLEService.class);
         mContext.bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
-    public void registerGattReceiver(BroadcastReceiver gattUpdateReceiver) {
+    void registerGattReceiver(BroadcastReceiver gattUpdateReceiver) {
         mContext.registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
     }
 
-    public void selectMachineGattServices() {
+    void selectMachineGattServices() {
         selectGattServices(mCommService.getSupportedGattServices());
     }
 
@@ -121,10 +133,12 @@ public class Machine {
                 charas.add(gattCharacteristic);
                 HashMap<String, String> currentCharaData = new HashMap<String, String>();
                 uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
+                if(uuid.equals(gattAttributes.UUID_MOTOR_DIRECTION)) {
                     mMotorDirectionCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
-                    mMotorSpeedCharacteristic = gattCharacteristic;
+                } else if(uuid.equals(gattAttributes.UUID_MOTOR_RIGHT_SPEED)) {
+                    mMotorLeftSpeedCharacteristic = gattCharacteristic;
+                } else if(uuid.equals(gattAttributes.UUID_MOTOR_RIGHT_SPEED)) {
+                    mMotorRightSpeedCharacteristic = gattCharacteristic;
                 }
 
                 currentCharaData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownCharaString));
@@ -143,7 +157,6 @@ public class Machine {
             mCommService = ((BLEService.LocalBinder) service).getService();
             if (!mCommService.initialize()) {
                 Log.e(TAG, "Unable to initialize Bluetooth");
-//                finish();
             }
             // Automatically connects to the device upon successful start-up initialization.
 //            mCommService.connect(mServiceAddress);

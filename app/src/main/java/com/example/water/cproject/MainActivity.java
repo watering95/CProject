@@ -69,9 +69,11 @@ public class MainActivity extends Activity {
         mMotorSpeed.setText("0");
         mMotorState.setText("Stop");
 
-        SeekBar sb = (SeekBar) findViewById(R.id.seekBarSpeed);
+        SeekBar sbSpeed = (SeekBar) findViewById(R.id.seekBarSpeed);
+        SeekBar sbSpeedLeft = (SeekBar) findViewById(R.id.seekBarLeftSpeed);
+        SeekBar sbSpeedRight = (SeekBar) findViewById(R.id.seekBarRightSpeed);
 
-        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mMachine.setRunSpeed(progress);
@@ -87,7 +89,39 @@ public class MainActivity extends Activity {
                 int progress;
                 progress = mMachine.getRunSpeed();
                 mMotorSpeed.setText(String.valueOf(progress));
-                mMachine.setRunSpeed(progress);
+            }
+        });
+
+        sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mMachine.setLeftSpeed(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress;
+            }
+        });
+        sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mMachine.setRightSpeed(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress;
             }
         });
 
@@ -174,32 +208,26 @@ public class MainActivity extends Activity {
         switch(v.getId()) {
             case R.id.buttonRun:
                 mMachine.action(mMachine.MACHINE_FORWARD);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_FORWARD);
                 mMotorState.setText("Run");
                 break;
             case R.id.buttonStop:
                 mMachine.action(mMachine.MACHINE_STOP);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 mMotorState.setText("Stop");
                 break;
             case R.id.buttonRight:
                 mMachine.action(mMachine.MACHINE_RIGHT);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
                 mMotorState.setText("Right");
                 break;
             case R.id.buttonLeft:
                 mMachine.action(mMachine.MACHINE_LEFT);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
                 mMotorState.setText("Left");
                 break;
             case R.id.buttonBack:
                 mMachine.action(mMachine.MACHINE_BACKWARD);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
                 mMotorState.setText("Back");
                 break;
             default:
                 mMachine.action(mMachine.MACHINE_STOP);
-//                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
                 break;
         }
     }
