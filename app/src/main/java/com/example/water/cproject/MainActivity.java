@@ -33,20 +33,15 @@ public class MainActivity extends Activity {
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBLEScanner;
 
-    private ScanSettings settings;
-    private List<ScanFilter> filters;
     private Machine mMachine;
 
     private boolean mScanning;
-    private boolean mScanned;
     private boolean mfindGenuino;
     private TextView mDeviceName;
     private TextView mDeviceAddress;
     private TextView mDeviceStatus;
     private TextView mMotorSpeed;
     private TextView mMotorState;
-
-    private final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
@@ -60,18 +55,18 @@ public class MainActivity extends Activity {
 
         mMachine = new Machine(this);
         mHandler = new Handler();
-        mDeviceName = (TextView) findViewById(R.id.deviceName);
-        mDeviceAddress  = (TextView) findViewById(R.id.deviceAddress);
-        mDeviceStatus = (TextView) findViewById(R.id.deviceStatus);
-        mMotorSpeed = (TextView) findViewById(R.id.motorSpeed);
-        mMotorState = (TextView) findViewById(R.id.motorState);
+        mDeviceName = findViewById(R.id.deviceName);
+        mDeviceAddress  = findViewById(R.id.deviceAddress);
+        mDeviceStatus = findViewById(R.id.deviceStatus);
+        mMotorSpeed = findViewById(R.id.motorSpeed);
+        mMotorState = findViewById(R.id.motorState);
 
         mMotorSpeed.setText("0");
         mMotorState.setText("Stop");
 
-        SeekBar sbSpeed = (SeekBar) findViewById(R.id.seekBarSpeed);
-        SeekBar sbSpeedLeft = (SeekBar) findViewById(R.id.seekBarLeftSpeed);
-        SeekBar sbSpeedRight = (SeekBar) findViewById(R.id.seekBarRightSpeed);
+        SeekBar sbSpeed = findViewById(R.id.seekBarSpeed);
+        SeekBar sbSpeedLeft = findViewById(R.id.seekBarLeftSpeed);
+        SeekBar sbSpeedRight = findViewById(R.id.seekBarRightSpeed);
 
         sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -91,7 +86,6 @@ public class MainActivity extends Activity {
                 mMotorSpeed.setText(String.valueOf(progress));
             }
         });
-
         sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -125,6 +119,7 @@ public class MainActivity extends Activity {
             }
         });
 
+        //BLE Permission
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int permissionResult = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
 
@@ -164,6 +159,7 @@ public class MainActivity extends Activity {
         // BluetoothAdapter through BluetoothManager.
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        assert bluetoothManager != null;
         mBluetoothAdapter = bluetoothManager.getAdapter();
 
         // Checks if Bluetooth is supported on the device.
@@ -178,7 +174,6 @@ public class MainActivity extends Activity {
         if (mBLEScanner == null) {
             Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
             finish();
-            return;
         }
     }
 
@@ -318,8 +313,9 @@ public class MainActivity extends Activity {
 
     private void scanBLEDevice(final boolean enable) {
 
-        settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
-        filters = new ArrayList<ScanFilter>();
+        ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
+        List<ScanFilter> filters = new ArrayList<>();
+        String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
         ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(DEFAULT_BLE_ADDRESS).build();
         filters.add(filter);
 
@@ -348,7 +344,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private ScanCallback mScanCallback = new ScanCallback() {
+    private final ScanCallback mScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             processResult(result);

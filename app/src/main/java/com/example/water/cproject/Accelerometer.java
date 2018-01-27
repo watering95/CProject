@@ -4,6 +4,7 @@ package com.example.water.cproject;
  * Created by water on 2017-04-18.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class Accelerometer {
     private float mAx, mAy, mAz;
 
@@ -11,7 +12,7 @@ public class Accelerometer {
         updateData(0,0,0);
     }
 
-    public void updateData(float x, float y, float z) {
+    private void updateData(float x, float y, float z) {
         mAx = x;
         mAy = y;
         mAz = z;

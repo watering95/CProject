@@ -4,6 +4,7 @@ package com.example.water.cproject;
  * Created by water on 2017-04-18.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class BLE {
     private String mName = null;
     private String mAddress = null;

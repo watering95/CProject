@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-
 import static android.content.ContentValues.TAG;
 import static android.content.Context.BIND_AUTO_CREATE;
 
@@ -23,26 +22,23 @@ import static android.content.Context.BIND_AUTO_CREATE;
  * Created by water on 2017-04-19.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 class Machine {
 
-    int MACHINE_FORWARD = 1;
-    int MACHINE_BACKWARD = 4;
-    int MACHINE_LEFT = 3;
-    int MACHINE_RIGHT = 2;
-    int MACHINE_STOP = 0;
+    final int MACHINE_FORWARD = 1;
+    final int MACHINE_BACKWARD = 4;
+    final int MACHINE_LEFT = 3;
+    final int MACHINE_RIGHT = 2;
+    final int MACHINE_STOP = 0;
 
-    Genuino101 mGenuino;
+    final Genuino101 mGenuino;
 
     private BLEService mCommService;
-    private Context mContext;
+    private final Context mContext;
 
-    private final String LIST_NAME = "NAME";
-    private final String LIST_UUID = "UUID";
     private int mRunSpeed;
     private int mLeftSpeed;
     private int mRightSpeed;
-    private int mDirection;
-    private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     private BluetoothGattCharacteristic mMotorDirectionCharacteristic;
     private BluetoothGattCharacteristic mMotorLeftSpeedCharacteristic;
     private BluetoothGattCharacteristic mMotorRightSpeedCharacteristic;
@@ -50,7 +46,6 @@ class Machine {
     Machine(Context context) {
         mContext = context;
         mRunSpeed = 0;
-        mDirection = MACHINE_STOP;
         mGenuino = new Genuino101();
         mCommService = new BLEService();
     }
@@ -77,13 +72,11 @@ class Machine {
         if(mMotorDirectionCharacteristic != null) mCommService.writeCharacteristic(mMotorDirectionCharacteristic, direction);
     }
 
-    boolean commConnect(String address) {
+    void commConnect(String address) {
         if (mCommService != null) {
             final boolean result = mCommService.connect(address);
             Log.d(TAG, "Connect request result=" + result);
-            return result;
         }
-        return false;
     }
 
     void commDisconnect() {
@@ -108,37 +101,43 @@ class Machine {
     // on the UI.
     private void selectGattServices(List<BluetoothGattService> gattServices) {
         if (gattServices == null) return;
-        String uuid = null;
+        String uuid;
         String unknownServiceString = mContext.getResources().getString(R.string.ble_unknown_service);
         String unknownCharaString = mContext.getResources().getString(R.string.ble_unknown_characteristic);
-        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<HashMap<String, String>>();
+        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<>();
         ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
-                = new ArrayList<ArrayList<HashMap<String, String>>>();
-        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+                = new ArrayList<>();
+        ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
 
         // Loops through available GATT Services.
         for (BluetoothGattService gattService : gattServices) {
-            HashMap<String, String> currentServiceData = new HashMap<String, String>();
+            HashMap<String, String> currentServiceData = new HashMap<>();
             uuid = gattService.getUuid().toString();
+            String LIST_NAME = "NAME";
             currentServiceData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownServiceString));
+            String LIST_UUID = "UUID";
             currentServiceData.put(LIST_UUID, uuid);
             gattServiceData.add(currentServiceData);
 
-            ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<HashMap<String, String>>();
+            ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<>();
             List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
-            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<BluetoothGattCharacteristic>();
+            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<>();
 
             // Loops through available Characteristics.
             for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                 charas.add(gattCharacteristic);
-                HashMap<String, String> currentCharaData = new HashMap<String, String>();
+                HashMap<String, String> currentCharaData = new HashMap<>();
                 uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(gattAttributes.UUID_MOTOR_DIRECTION)) {
-                    mMotorDirectionCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(gattAttributes.UUID_MOTOR_RIGHT_SPEED)) {
-                    mMotorLeftSpeedCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(gattAttributes.UUID_MOTOR_RIGHT_SPEED)) {
-                    mMotorRightSpeedCharacteristic = gattCharacteristic;
+                switch (uuid) {
+                    case gattAttributes.UUID_MOTOR_DIRECTION:
+                        mMotorDirectionCharacteristic = gattCharacteristic;
+                        break;
+                    case gattAttributes.UUID_MOTOR_LEFT_SPEED:
+                        mMotorLeftSpeedCharacteristic = gattCharacteristic;
+                        break;
+                    case gattAttributes.UUID_MOTOR_RIGHT_SPEED:
+                        mMotorRightSpeedCharacteristic = gattCharacteristic;
+                        break;
                 }
 
                 currentCharaData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownCharaString));
@@ -151,11 +150,11 @@ class Machine {
         }
     }
 
-    private ServiceConnection mServiceConnection = new ServiceConnection(){
+    private final ServiceConnection mServiceConnection = new ServiceConnection(){
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service){
             mCommService = ((BLEService.LocalBinder) service).getService();
-            if (!mCommService.initialize()) {
+            if (mCommService.initialize()) {
                 Log.e(TAG, "Unable to initialize Bluetooth");
             }
             // Automatically connects to the device upon successful start-up initialization.

@@ -10,17 +10,18 @@ import java.util.HashMap;
  * Created by water on 2017-04-18.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 class gattAttributes {
 
-    static String UUID_GYRO_X_MEASUREMENT = "0000bbb1-0000-1000-8000-00805f9b34fb";
-    static String UUID_GYRO_Y_MEASUREMENT = "0000bbb2-0000-1000-8000-00805f9b34fb";
-    static String UUID_GYRO_Z_MEASUREMENT = "0000bbb3-0000-1000-8000-00805f9b34fb";
-    static String UUID_ACCL_X_MEASUREMENT = "0000bbb4-0000-1000-8000-00805f9b34fb";
-    static String UUID_ACCL_Y_MEASUREMENT = "0000bbb5-0000-1000-8000-00805f9b34fb";
-    static String UUID_ACCL_Z_MEASUREMENT = "0000bbb6-0000-1000-8000-00805f9b34fb";
-    static String UUID_MOTOR_DIRECTION = "0000bbb7-0000-1000-8000-00805f9b34fb";
-    static String UUID_MOTOR_LEFT_SPEED = "0000bbb8-0000-1000-8000-00805f9b34fb";
-    static String UUID_MOTOR_RIGHT_SPEED = "0000bbb9-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_GYRO_X_MEASUREMENT = "0000bbb1-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_GYRO_Y_MEASUREMENT = "0000bbb2-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_GYRO_Z_MEASUREMENT = "0000bbb3-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_ACCL_X_MEASUREMENT = "0000bbb4-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_ACCL_Y_MEASUREMENT = "0000bbb5-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_ACCL_Z_MEASUREMENT = "0000bbb6-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_DIRECTION = "0000bbb7-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_LEFT_SPEED = "0000bbb8-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_RIGHT_SPEED = "0000bbb9-0000-1000-8000-00805f9b34fb";
 
     private final static String GYRO_X_DATA =
             "com.example.bluetooth.le.GYRO_X_DATA";
@@ -37,7 +38,8 @@ class gattAttributes {
     private final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
-    private static HashMap<String, String> attributes = new HashMap();
+    @SuppressWarnings("unchecked")
+    private static final HashMap<String, String> attributes = new HashMap();
 
     static {
         // Sample Services.
@@ -96,6 +98,4 @@ class gattAttributes {
         b.put(v).flip();
         return b.order(order).getInt();
     }
-
-
 }

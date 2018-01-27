@@ -25,6 +25,7 @@ import static android.content.ContentValues.TAG;
  * Created by water on 2017-04-18.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class BLEService extends Service {
 
     public final static String ACTION_GATT_CONNECTED =
@@ -82,17 +83,17 @@ public class BLEService extends Service {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
                 Log.e(TAG, "Unable to initialize BluetoothManager.");
-                return false;
+                return true;
             }
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
             Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -211,7 +212,7 @@ public class BLEService extends Service {
         characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         boolean success = false;
         int i=0;
-        while(!success || i > 5) {
+        while(!success || i < 5) {
             success = mBluetoothGatt.writeCharacteristic(characteristic);
             i++;
         }

@@ -4,10 +4,11 @@ package com.example.water.cproject;
  * Created by water on 2017-04-18.
  */
 
-public class Genuino101 {
-    private BLE mBLE = new BLE();
-    private Gyroscope mGyro = new Gyroscope();
-    private Accelerometer mAccelerometer = new Accelerometer();
+@SuppressWarnings("DefaultFileTemplate")
+class Genuino101 {
+    private final BLE mBLE = new BLE();
+    private final Gyroscope mGyro = new Gyroscope();
+    private final Accelerometer mAccelerometer = new Accelerometer();
     private float positionX, positionY, positionZ;
     private float speedX, speedY, speedZ;
 
@@ -27,12 +28,12 @@ public class Genuino101 {
         return mBLE;
     }
 
-    public void initPosition() {
+    private void initPosition() {
         setPotision(0,0,0);
         setSpeed(0,0,0);
     }
 
-    public void setPotision(float x, float y, float z) {
+    private void setPotision(float x, float y, float z) {
         positionX = x;
         positionY = y;
         positionZ = z;
@@ -47,7 +48,7 @@ public class Genuino101 {
         return positionZ;
     }
 
-    public void setSpeed(float x, float y, float z) {
+    private void setSpeed(float x, float y, float z) {
         speedX = x;
         speedY = y;
         speedZ = z;
