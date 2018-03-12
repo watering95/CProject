@@ -111,8 +111,7 @@
             <Button
                 android:id="@+id/buttonLeft"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:text="Left"
                 android:onClick="onClick" />
             <SeekBar
@@ -137,8 +136,7 @@
             <Button
                 android:id="@+id/buttonRight"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:text="Right"
                 android:onClick="onClick" />
             <SeekBar
@@ -161,4 +159,41 @@
             android:onClick="onClick"
             android:layout_weight="1" />
     </LinearLayout>
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*">
+        <TableRow>
+            <TextView
+                android:text="Gyro"
+                android:layout_span="3"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/gx"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/gy"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/gz"
+                android:text="0"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:text="Accelerometer"
+                android:layout_span="3"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/ax"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/ay"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/az"
+                android:text="0"/>
+        </TableRow>
+    </TableLayout>
 </LinearLayout>

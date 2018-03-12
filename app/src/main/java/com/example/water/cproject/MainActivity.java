@@ -18,6 +18,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.ArrayMap;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,44 +26,58 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends Activity {
-    private Handler mHandler;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeScanner mBLEScanner;
+    private Handler handler;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothLeScanner BLEScanner;
 
-    private Machine mMachine;
+    private Machine machine;
+    private BackThread thread = new BackThread();
 
-    private boolean mScanning;
-    private boolean mfindGenuino;
-    private TextView mDeviceName;
-    private TextView mDeviceAddress;
-    private TextView mDeviceStatus;
-    private TextView mMotorSpeed;
-    private TextView mMotorState;
+    private boolean isScanningMachine;
+    private boolean isFindMachine;
+    private TextView peripheralName;
+    private TextView peripheralAddress;
+    private TextView deviceStatus;
+    private TextView motorSpeed;
+    private TextView motorState;
+    private TextView gyroX, gyroY, gyroZ;
+    private TextView accelerometerX, accelerometerY, accelerometerZ;
 
+    private static final boolean SCAN_START = true;
+    private static final boolean SCAN_STOP = false;
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
-    private String mServiceAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mMachine = new Machine(this);
-        mHandler = new Handler();
-        mDeviceName = findViewById(R.id.deviceName);
-        mDeviceAddress  = findViewById(R.id.deviceAddress);
-        mDeviceStatus = findViewById(R.id.deviceStatus);
-        mMotorSpeed = findViewById(R.id.motorSpeed);
-        mMotorState = findViewById(R.id.motorState);
+        machine = new Machine();
+        handler = new Handler();
+        peripheralName = findViewById(R.id.deviceName);
+        peripheralAddress = findViewById(R.id.deviceAddress);
+        deviceStatus = findViewById(R.id.deviceStatus);
+        motorSpeed = findViewById(R.id.motorSpeed);
+        motorState = findViewById(R.id.motorState);
 
-        mMotorSpeed.setText("0");
-        mMotorState.setText("Stop");
+        motorSpeed.setText("0");
+        motorState.setText("Stop");
+
+        gyroX = findViewById(R.id.gx);
+        gyroY = findViewById(R.id.gy);
+        gyroZ = findViewById(R.id.gz);
+        accelerometerX = findViewById(R.id.ax);
+        accelerometerY = findViewById(R.id.ay);
+        accelerometerZ = findViewById(R.id.az);
 
         SeekBar sbSpeed = findViewById(R.id.seekBarSpeed);
         SeekBar sbSpeedLeft = findViewById(R.id.seekBarLeftSpeed);
@@ -71,7 +86,7 @@ public class MainActivity extends Activity {
         sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mMachine.setRunSpeed(progress);
+                machine.setRunSpeed(progress);
             }
 
             @Override
@@ -82,14 +97,14 @@ public class MainActivity extends Activity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress;
-                progress = mMachine.getRunSpeed();
-                mMotorSpeed.setText(String.valueOf(progress));
+                progress = machine.getRunSpeed();
+                motorSpeed.setText(String.valueOf(progress));
             }
         });
         sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mMachine.setLeftSpeed(progress);
+                machine.setSpeedOffsetLeft(progress);
             }
 
             @Override
@@ -99,13 +114,13 @@ public class MainActivity extends Activity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                int progress;
+
             }
         });
         sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mMachine.setRightSpeed(progress);
+                machine.setSpeedOffsetRight(progress);
             }
 
             @Override
@@ -115,23 +130,23 @@ public class MainActivity extends Activity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                int progress;
+
             }
         });
 
         //BLE Permission
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int permissionResult = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
 
-            if(permissionResult != PackageManager.PERMISSION_GRANTED) {
-                if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            if (permissionResult != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
                     AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
                     dialog.setTitle("Need Permission").setMessage("This Function need Permission \"COARSE LOCATION\". Continue?")
-                            .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
                                     }
                                 }
                             }).setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -141,11 +156,9 @@ public class MainActivity extends Activity {
                         }
                     }).create().show();
                 } else {
-                    requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
                 }
-            } else {
             }
-        } else {
         }
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
@@ -160,71 +173,56 @@ public class MainActivity extends Activity {
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         assert bluetoothManager != null;
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        bluetoothAdapter = bluetoothManager.getAdapter();
 
         // Checks if Bluetooth is supported on the device.
-        if (mBluetoothAdapter == null) {
+        if (bluetoothAdapter == null) {
             Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        mBLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        BLEScanner = bluetoothAdapter.getBluetoothLeScanner();
         // Checks if Bluetooth LE Scanner is available.
-        if (mBLEScanner == null) {
+        if (BLEScanner == null) {
             Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
             finish();
         }
+        thread.setDaemon(true);
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        switch (requestCode) {
-            case 1000:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-
-                }
-                break;
-        }
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
-        mMachine.bindService();
+        registerReceiver(gattUpdateReceiver, machine.makeGattUpdateIntentFilter());
+        machine.bindBLEService(this);
+        thread.start();
     }
-
-    public void onClick(View v) {
-        if(!mMachine.mGenuino.getBLE().getConnectState()) return;
-        switch(v.getId()) {
-            case R.id.buttonRun:
-                mMachine.action(mMachine.MACHINE_FORWARD);
-                mMotorState.setText("Run");
-                break;
-            case R.id.buttonStop:
-                mMachine.action(mMachine.MACHINE_STOP);
-                mMotorState.setText("Stop");
-                break;
-            case R.id.buttonRight:
-                mMachine.action(mMachine.MACHINE_RIGHT);
-                mMotorState.setText("Right");
-                break;
-            case R.id.buttonLeft:
-                mMachine.action(mMachine.MACHINE_LEFT);
-                mMotorState.setText("Left");
-                break;
-            case R.id.buttonBack:
-                mMachine.action(mMachine.MACHINE_BACKWARD);
-                mMotorState.setText("Back");
-                break;
-            default:
-                mMachine.action(mMachine.MACHINE_STOP);
-                break;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!bluetoothAdapter.isEnabled()) {
+            if (!bluetoothAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
         }
+        scanBLEDevice(SCAN_START);
+        thread.on();
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        scanBLEDevice(SCAN_STOP);
+        thread.off();
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        machine.commClose();
+        unregisterReceiver(gattUpdateReceiver);
+        thread.off();
     }
 
     @Override
@@ -233,24 +231,23 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
-
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if(mMachine.mGenuino.getBLE().getConnectState()) {
+        if (machine.getControlBoard().getBLE().getConnectState()) {
             menu.findItem(R.id.menu_scan).setVisible(false);
             menu.findItem(R.id.menu_connect).setVisible(false);
             menu.findItem(R.id.menu_disconnect).setVisible(true);
-            menu.findItem(R.id.menu_stop).setVisible(true);
+            menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_refresh).setActionView(null);
         } else {
-            if(mfindGenuino) {
+            if (isFindMachine) {
                 menu.findItem(R.id.menu_scan).setVisible(false);
                 menu.findItem(R.id.menu_connect).setVisible(true);
                 menu.findItem(R.id.menu_disconnect).setVisible(false);
                 menu.findItem(R.id.menu_stop).setVisible(true);
                 menu.findItem(R.id.menu_refresh).setActionView(null);
             } else {
-                if (mScanning) {
+                if (isScanningMachine) {
                     menu.findItem(R.id.menu_scan).setVisible(false);
                     menu.findItem(R.id.menu_connect).setVisible(false);
                     menu.findItem(R.id.menu_disconnect).setVisible(false);
@@ -267,84 +264,145 @@ public class MainActivity extends Activity {
         }
         return super.onPrepareOptionsMenu(menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_scan:
-                scanBLEDevice(true);
+                scanBLEDevice(SCAN_START);
                 break;
             case R.id.menu_stop:
-                mMachine.commDisconnect();
-                scanBLEDevice(false);
+                scanBLEDevice(SCAN_STOP);
                 break;
             case R.id.menu_connect:
-                mMachine.commConnect(mServiceAddress);
+                machine.commConnect();
                 break;
             case R.id.menu_disconnect:
-                mMachine.commDisconnect();
+                machine.commDisconnect();
                 break;
         }
         return true;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mMachine.registerGattReceiver(mGattUpdateReceiver);
-        mMachine.commConnect(mServiceAddress);
-
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
+    public void onClick(View v) {
+        if (!machine.getControlBoard().getBLE().getConnectState()) return;
+        switch (v.getId()) {
+            case R.id.buttonRun:
+                machine.transferMovingOperation(machine.MACHINE_FORWARD);
+                break;
+            case R.id.buttonStop:
+                machine.transferMovingOperation(machine.MACHINE_STOP);
+                break;
+            case R.id.buttonRight:
+                machine.transferMovingOperation(machine.MACHINE_RIGHT);
+                break;
+            case R.id.buttonLeft:
+                machine.transferMovingOperation(machine.MACHINE_LEFT);
+                break;
+            case R.id.buttonBack:
+                machine.transferMovingOperation(machine.MACHINE_BACKWARD);
+                break;
+            default:
+                machine.transferMovingOperation(machine.MACHINE_STOP);
+                break;
         }
-        scanBLEDevice(true);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        scanBLEDevice(false);
+    public void onRequestPermissionsResult(int requestCode, @SuppressWarnings("NullableProblems") String[] permissions, @SuppressWarnings("NullableProblems") int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case 1000:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+
+                }
+                break;
+        }
     }
 
-    private void scanBLEDevice(final boolean enable) {
+    private void displayConnectionState(final int resourceId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                deviceStatus.setText(resourceId);
+            }
+        });
+    }
+    private void displayMotorState(int state) {
+        switch(state) {
+            case 1:
+                motorState.setText("Run");
+                break;
+            case 4:
+                motorState.setText("Back");
+                break;
+            case 3:
+                motorState.setText("Left");
+                break;
+            case 2:
+                motorState.setText("Right");
+                break;
+            case 0:
+                motorState.setText("Stop");
+                break;
+        }
+    }
+    private void displayData(Gyroscope gyro) {
+        gyroX.setText(String.format(Locale.getDefault(), "%.03f",gyro.getX()));
+        gyroY.setText(String.format(Locale.getDefault(), "%.03f",gyro.getY()));
+        gyroZ.setText(String.format(Locale.getDefault(), "%.03f",gyro.getZ()));
+    }
+    private void displayData(Accelerometer accelerometer) {
+        accelerometerX.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getX()));
+        accelerometerY.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getY()));
+        accelerometerZ.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getZ()));
+    }
+
+    private void scanBLEDevice(boolean isScan) {
+        final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
 
         ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
         List<ScanFilter> filters = new ArrayList<>();
-        String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
         ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(DEFAULT_BLE_ADDRESS).build();
+
         filters.add(filter);
 
-        if (enable) {
+        if (isScan) {
             // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
+            handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
-                    mBLEScanner.stopScan(mScanCallback);
+                    BLEScanner.stopScan(scanCallback);
+                    isScanningMachine = false;
+                    if(!machine.getControlBoard().getBLE().getConnectState()) {
+                        isFindMachine = false;
+                        peripheralName.setText("No Device");
+                        peripheralAddress.setText("No Device");
+                        displayConnectionState(R.string.stop_ble_scan);
+                    }
+                    invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
-            mScanning = true;
-            mBLEScanner.startScan(filters, settings, mScanCallback);
-            updateConnectionState(R.string.ble_scanning);
-            invalidateOptionsMenu();
+            BLEScanner.startScan(filters, settings, scanCallback);
+            isScanningMachine = true;
+            isFindMachine = false;
+            displayConnectionState(R.string.scan_ble);
         } else {
-            mScanning = false;
-            mfindGenuino = false;
-            mBLEScanner.stopScan(mScanCallback);
-            updateConnectionState(R.string.ble_stopscan);
-            mDeviceName.setText("No Device");
-            mDeviceAddress.setText("No Device");
-            mServiceAddress = null;
-            invalidateOptionsMenu();
+            BLEScanner.stopScan(scanCallback);
+            isScanningMachine = false;
+            if(!machine.getControlBoard().getBLE().getConnectState()) {
+                isFindMachine = false;
+                peripheralName.setText("No Device");
+                peripheralAddress.setText("No Device");
+                displayConnectionState(R.string.stop_ble_scan);
+            }
         }
+        invalidateOptionsMenu();
     }
 
-    private final ScanCallback mScanCallback = new ScanCallback() {
+    private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             processResult(result);
@@ -360,6 +418,11 @@ public class MainActivity extends Activity {
         @Override
         public void onScanFailed(int errorCode) {
             Toast.makeText(MainActivity.this, String.valueOf(errorCode), Toast.LENGTH_SHORT).show();
+            isScanningMachine = false;
+            isFindMachine = false;
+            peripheralName.setText("No Device");
+            peripheralAddress.setText("No Device");
+            displayConnectionState(R.string.fail_ble_scan);
             invalidateOptionsMenu();
         }
 
@@ -367,14 +430,16 @@ public class MainActivity extends Activity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(!mfindGenuino) {
-                        mMachine.mGenuino.getBLE().setName(result.getDevice().getName());
-                        mDeviceName.setText(mMachine.mGenuino.getBLE().getName());
-                        mMachine.mGenuino.getBLE().setAddress(result.getDevice().getAddress());
-                        mServiceAddress = mMachine.mGenuino.getBLE().getAddress();
-                        mDeviceAddress.setText(mServiceAddress);
-                        updateConnectionState(R.string.ble_scan_finish);
-                        mfindGenuino = true;
+                    if (!isFindMachine && result != null) {
+                        BLE ble = machine.getControlBoard().getBLE();
+
+                        ble.setName(result.getDevice().getName());
+                        peripheralName.setText(ble.getName());
+                        ble.setPeripheralAddress(result.getDevice().getAddress());
+                        peripheralAddress.setText(ble.getPeripheralAddress());
+                        displayConnectionState(R.string.success_ble_scan);
+                        isFindMachine = true;
+                        machine.commConnect();
                         invalidateOptionsMenu();
                     }
                 }
@@ -388,33 +453,89 @@ public class MainActivity extends Activity {
     // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
     // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
     //                        or notification operations.
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+            Gyroscope gyro = machine.getControlBoard().getGyroscope();
+            Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
+
             if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-                mMachine.mGenuino.getBLE().setConnect();
-                updateConnectionState(R.string.ble_connected);
+                machine.getControlBoard().getBLE().setConnectState(true);
+                scanBLEDevice(SCAN_STOP);
+                displayConnectionState(R.string.ble_connected);
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mMachine.mGenuino.getBLE().setDisconnect();
-                updateConnectionState(R.string.ble_disconnected);
+                displayConnectionState(R.string.ble_disconnected);
+                machine.getControlBoard().getBLE().setConnectState(false);
+                isFindMachine = false;
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Select Genuino services and characteristics on the user interface.
-                mMachine.selectMachineGattServices();
+                machine.getGattServices();
+                machine.readMachineState();
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
+                ByteBuffer receiveBuffer = ByteBuffer.wrap(intent.getByteArrayExtra(gattAttributes.MACHINE_STATE));
+                Map<String, ByteBuffer> byteBuffers = new ArrayMap<>();
+                String key[] = {"machineState", "gx", "gy", "gz", "ax", "ay", "az"};
 
+                byte b;
+
+                for (String aKey : key) {
+                    ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+
+                    do {
+                        b = receiveBuffer.get();
+
+                        if (b != ',') {
+                            byteBuffer.put(b);
+                        } else {
+                            byteBuffer.flip();
+                            byteBuffers.put(aKey, byteBuffer);
+                            byteBuffer.clear();
+                        }
+                    } while (b != ',');
+                }
+
+                float data[] = new float[6];
+                for(int i = 0; i < 6; i++ ) {
+                    data[i] = Float.valueOf(byteBufferToString(byteBuffers.get(key[i+1])));
+                }
+                byteBuffers.clear();
+
+                gyro.updateData(data[0], data[1], data[2]);
+                accelerometer.updateData(data[3], data[4], data[5]);
+
+                displayData(gyro.getData());
+                displayData(accelerometer.getData());
+                displayMotorState(machine.getMachineState());
             }
         }
     };
 
-    private void updateConnectionState(final int resourceId) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mDeviceStatus.setText(resourceId);
+    class BackThread extends Thread {
+        private volatile boolean running = true;
+
+        public void run() {
+            while (running) {
+                if(machine.getControlBoard().getBLE().getConnectState()) {
+                    machine.readMachineState();
+                }
             }
-        });
+        }
+        public void on() {
+            running = true;
+        }
+        public void off() {
+            running = false;
+        }
+    }
+
+    private String byteBufferToString(ByteBuffer buffer) {
+        byte[] data = new byte[buffer.limit()];
+        buffer.get(data, 0, buffer.limit());
+
+        return new String(data);
     }
 }
+

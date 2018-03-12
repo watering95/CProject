@@ -12,29 +12,23 @@ import java.util.HashMap;
 
 @SuppressWarnings("DefaultFileTemplate")
 class gattAttributes {
+    private static final String UUID_MACHINE_SERVICE = "0000bbb0-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MACHINE_STATE = "0000bbb1-0000-1000-8000-00805f9b34fb";
 
-    private static final String UUID_GYRO_X_MEASUREMENT = "0000bbb1-0000-1000-8000-00805f9b34fb";
-    private static final String UUID_GYRO_Y_MEASUREMENT = "0000bbb2-0000-1000-8000-00805f9b34fb";
-    private static final String UUID_GYRO_Z_MEASUREMENT = "0000bbb3-0000-1000-8000-00805f9b34fb";
-    private static final String UUID_ACCL_X_MEASUREMENT = "0000bbb4-0000-1000-8000-00805f9b34fb";
-    private static final String UUID_ACCL_Y_MEASUREMENT = "0000bbb5-0000-1000-8000-00805f9b34fb";
-    private static final String UUID_ACCL_Z_MEASUREMENT = "0000bbb6-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_DIRECTION = "0000bbb7-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_LEFT_SPEED = "0000bbb8-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_RIGHT_SPEED = "0000bbb9-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_MOTOR_SERVICE = "00000174-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_DIRECTION = "00000175-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_LEFT_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
+    static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
 
-    private final static String GYRO_X_DATA =
-            "com.example.bluetooth.le.GYRO_X_DATA";
-    private final static String GYRO_Y_DATA =
-            "com.example.bluetooth.le.GYRO_Y_DATA";
-    private final static String GYRO_Z_DATA =
-            "com.example.bluetooth.le.GYRO_Z_DATA";
-    private final static String ACCL_X_DATA =
-            "com.example.bluetooth.le.ACCL_X_DATA";
-    private final static String ACCL_Y_DATA =
-            "com.example.bluetooth.le.ACCL_Y_DATA";
-    private final static String ACCL_Z_DATA =
-            "com.example.bluetooth.le.ACCL_Z_DATA";
+    final static String MACHINE_STATE =
+            "com.example.bluetooth.le.MACHINE_STATE";
+    private final static String MOTOR_DIRECTION =
+            "com.example.bluetooth.le.MOTOR_DIRECTION";
+    private final static String MOTOR_LEFT_SPEED =
+            "com.example.bluetooth.le.MOTOR_LEFT_SPEED";
+    private final static String MOTOR_RIGHT_SPEED =
+            "com.example.bluetooth.le.MOTOR_RIGHT_SPEED";
+
     private final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
@@ -42,15 +36,10 @@ class gattAttributes {
     private static final HashMap<String, String> attributes = new HashMap();
 
     static {
-        // Sample Services.
-        attributes.put("0000bbb0-0000-1000-8000-00805f9b34fb", "Gyro Measurement Service");
-        // Sample Characteristics.
-        attributes.put(UUID_GYRO_X_MEASUREMENT, "Gyro X Measurement");
-        attributes.put(UUID_GYRO_Y_MEASUREMENT, "Gyro Y Measurement");
-        attributes.put(UUID_GYRO_Z_MEASUREMENT, "Gyro Z Measurement");
-        attributes.put(UUID_ACCL_X_MEASUREMENT, "Accelerometer X Measurement");
-        attributes.put(UUID_ACCL_Y_MEASUREMENT, "Accelerometer Y Measurement");
-        attributes.put(UUID_ACCL_Z_MEASUREMENT, "Accelerometer Z Measurement");
+        attributes.put(UUID_MACHINE_SERVICE, "Machine Service");
+        attributes.put(UUID_MACHINE_STATE, "Motor State");
+
+        attributes.put(UUID_MOTOR_SERVICE, "Motor Service");
         attributes.put(UUID_MOTOR_DIRECTION, "Motor Direction");
         attributes.put(UUID_MOTOR_LEFT_SPEED, "Motor Left Speed");
         attributes.put(UUID_MOTOR_RIGHT_SPEED, "Motor Right Speed");
@@ -60,37 +49,34 @@ class gattAttributes {
         String name = attributes.get(uuid);
         return name == null ? defaultName : name;
     }
+    static Intent intentPutExtra(String action, BluetoothGattCharacteristic characteristic) {
+        final Intent intent = new Intent(action);
+        final byte[] data = characteristic.getValue();
 
-    static Intent intentPutExtra(Intent intent, BluetoothGattCharacteristic characteristic) {
-        if (UUID_GYRO_X_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(GYRO_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(), ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_GYRO_Y_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(GYRO_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_GYRO_Z_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(GYRO_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if (UUID_ACCL_X_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(ACCL_X_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_ACCL_Y_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(ACCL_Y_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else if(UUID_ACCL_Z_MEASUREMENT.equals(characteristic.getUuid().toString())) {
-            intent.putExtra(ACCL_Z_DATA, String.valueOf(changeFloatByteOrder(characteristic.getValue(),ByteOrder.LITTLE_ENDIAN)));
-        } else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
+        switch(characteristic.getUuid().toString()) {
+            case UUID_MOTOR_DIRECTION:
+                intent.putExtra(MOTOR_DIRECTION, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+                break;
+            case UUID_MOTOR_LEFT_SPEED:
+                intent.putExtra(MOTOR_LEFT_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+                break;
+            case UUID_MOTOR_RIGHT_SPEED:
+                intent.putExtra(MOTOR_RIGHT_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+                break;
+            case UUID_MACHINE_STATE:
+                intent.putExtra(MACHINE_STATE, data);
+                break;
+            default:
+                // For all other profiles, writes the data formatted in HEX.
+                if (data != null && data.length > 0) {
+                    final StringBuilder stringBuilder = new StringBuilder(data.length);
+                    for(byte byteChar : data)
+                        stringBuilder.append(String.format("%02X ", byteChar));
+                    intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+                }
+                break;
         }
         return intent;
-    }
-
-    static private float changeFloatByteOrder(byte[] v, ByteOrder order) {
-        ByteBuffer b = ByteBuffer.allocate(4);
-        b.put(v).flip();
-        return b.order(order).getFloat();
     }
 
     static private int changeIntByteOrder(byte[] v, ByteOrder order) {

@@ -6,27 +6,27 @@ package com.example.water.cproject;
 
 @SuppressWarnings("DefaultFileTemplate")
 public class Gyroscope {
-    private float mGx, mGy, mGz;
+    private float x, y, z;
 
     public Gyroscope() {
         updateData(0,0,0);
     }
 
-    private void updateData(float x, float y, float z) {
-        mGx = x;
-        mGy = y;
-        mGz = z;
+    public void updateData(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
     public Gyroscope getData() {
         return this;
     }
-    public float getGx() {
-        return mGx;
+    public float getX() {
+        return x;
     }
-    public float getGy() {
-        return mGy;
+    public float getY() {
+        return y;
     }
-    public float getGz() {
-        return mGz;
+    public float getZ() {
+        return z;
     }
 }
