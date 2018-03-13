@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 
 import java.util.List;
 
+import static com.example.water.cproject.IMUService.ACTION;
+
 /**
  * Created by water on 2017-04-19.
  */
@@ -74,8 +76,9 @@ class Machine {
     void commClose() {
         ble.close();
     }
-    void bindBLEService(Context context) {
+    void bindService(Context context) {
         ble.bindService(context);
+        genuino.bindService(context);
     }
     void getGattServices() {
         getGattServices(ble.getSupportedGattServices());
@@ -85,7 +88,9 @@ class Machine {
         ble.readCharacteristic(mCharacteristicMachineState);
     }
     IntentFilter makeGattUpdateIntentFilter() {
-        return ble.makeGattUpdateIntentFilter();
+        IntentFilter intentFilter = ble.makeGattUpdateIntentFilter();
+        intentFilter.addAction(ACTION);
+        return intentFilter;
     }
 
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.

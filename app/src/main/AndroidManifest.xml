@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
         <service android:name=".BLEService" />
+        <service android:name=".IMUService" />
     </application>
 
 </manifest>

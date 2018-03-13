@@ -18,7 +18,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.ArrayMap;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,11 +25,11 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends Activity {
     private Handler handler;
@@ -38,7 +37,8 @@ public class MainActivity extends Activity {
     private BluetoothLeScanner BLEScanner;
 
     private Machine machine;
-    private BackThread thread = new BackThread();
+    private final ScheduledJob scheduledJob = new ScheduledJob();
+    private final Timer jobScheduler = new Timer();
 
     private boolean isScanningMachine;
     private boolean isFindMachine;
@@ -188,14 +188,13 @@ public class MainActivity extends Activity {
             Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
             finish();
         }
-        thread.setDaemon(true);
     }
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(gattUpdateReceiver, machine.makeGattUpdateIntentFilter());
-        machine.bindBLEService(this);
-        thread.start();
+        registerReceiver(broadcastReceiver, machine.makeGattUpdateIntentFilter());
+        machine.bindService(this);
+        jobScheduler.scheduleAtFixedRate(scheduledJob, 1000, 100);
     }
     @Override
     protected void onResume() {
@@ -209,20 +208,18 @@ public class MainActivity extends Activity {
             }
         }
         scanBLEDevice(SCAN_START);
-        thread.on();
     }
     @Override
     protected void onPause() {
         super.onPause();
         scanBLEDevice(SCAN_STOP);
-        thread.off();
     }
     @Override
     protected void onStop() {
         super.onStop();
         machine.commClose();
-        unregisterReceiver(gattUpdateReceiver);
-        thread.off();
+        unregisterReceiver(broadcastReceiver);
+        jobScheduler.cancel();
     }
 
     @Override
@@ -453,7 +450,7 @@ public class MainActivity extends Activity {
     // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
     // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
     //                        or notification operations.
-    private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -474,34 +471,8 @@ public class MainActivity extends Activity {
                 // Select Genuino services and characteristics on the user interface.
                 machine.getGattServices();
                 machine.readMachineState();
-            } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
-                ByteBuffer receiveBuffer = ByteBuffer.wrap(intent.getByteArrayExtra(gattAttributes.MACHINE_STATE));
-                Map<String, ByteBuffer> byteBuffers = new ArrayMap<>();
-                String key[] = {"machineState", "gx", "gy", "gz", "ax", "ay", "az"};
-
-                byte b;
-
-                for (String aKey : key) {
-                    ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-
-                    do {
-                        b = receiveBuffer.get();
-
-                        if (b != ',') {
-                            byteBuffer.put(b);
-                        } else {
-                            byteBuffer.flip();
-                            byteBuffers.put(aKey, byteBuffer);
-                            byteBuffer.clear();
-                        }
-                    } while (b != ',');
-                }
-
-                float data[] = new float[6];
-                for(int i = 0; i < 6; i++ ) {
-                    data[i] = Float.valueOf(byteBufferToString(byteBuffers.get(key[i+1])));
-                }
-                byteBuffers.clear();
+            } else if (IMUService.ACTION.equals(action)) {
+                float data[] = intent.getFloatArrayExtra(IMUService.DATA);
 
                 gyro.updateData(data[0], data[1], data[2]);
                 accelerometer.updateData(data[3], data[4], data[5]);
@@ -513,29 +484,12 @@ public class MainActivity extends Activity {
         }
     };
 
-    class BackThread extends Thread {
-        private volatile boolean running = true;
-
+    class ScheduledJob extends TimerTask {
         public void run() {
-            while (running) {
-                if(machine.getControlBoard().getBLE().getConnectState()) {
-                    machine.readMachineState();
-                }
+            if(machine.getControlBoard().getBLE().getConnectState()) {
+                machine.readMachineState();
             }
         }
-        public void on() {
-            running = true;
-        }
-        public void off() {
-            running = false;
-        }
-    }
-
-    private String byteBufferToString(ByteBuffer buffer) {
-        byte[] data = new byte[buffer.limit()];
-        buffer.get(data, 0, buffer.limit());
-
-        return new String(data);
     }
 }
 

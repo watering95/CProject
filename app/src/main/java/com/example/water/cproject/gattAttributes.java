@@ -21,7 +21,7 @@ class gattAttributes {
     static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
 
     final static String MACHINE_STATE =
-            "com.example.bluetooth.le.MACHINE_STATE";
+            "com.example.bluetooth.le.ACTION";
     private final static String MOTOR_DIRECTION =
             "com.example.bluetooth.le.MOTOR_DIRECTION";
     private final static String MOTOR_LEFT_SPEED =

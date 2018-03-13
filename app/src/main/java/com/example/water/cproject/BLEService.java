@@ -231,7 +231,6 @@ public class BLEService extends Service {
         intentFilter.addAction(ACTION_GATT_CONNECTED);
         intentFilter.addAction(ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(ACTION_DATA_AVAILABLE);
         intentFilter.addAction(ACTION_DATA_WRITE);
         intentFilter.addAction(ACTION_DATA_READ);
         return intentFilter;
@@ -244,7 +243,6 @@ public class BLEService extends Service {
     private void broadcastUpdate(final String action, final BluetoothGattCharacteristic characteristic) {
         sendBroadcast(gattAttributes.intentPutExtra(action,characteristic));
     }
-
     private byte[] convertIntByte(int v, ByteOrder order) {
         ByteBuffer b = ByteBuffer.allocate(4);
         b.order(order).putInt(v);
