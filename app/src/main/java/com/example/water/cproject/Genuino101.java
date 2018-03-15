@@ -1,64 +1,50 @@
 package com.example.water.cproject;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+
+import static android.content.Context.BIND_AUTO_CREATE;
+
 /**
  * Created by water on 2017-04-18.
  */
 
-public class Genuino101 {
-    private BLE mBLE = new BLE();
-    private Gyroscope mGyro = new Gyroscope();
-    private Accelerometer mAccelerometer = new Accelerometer();
-    private float positionX, positionY, positionZ;
-    private float speedX, speedY, speedZ;
+@SuppressWarnings("DefaultFileTemplate")
+class Genuino101 {
+    private final BLE ble = new BLE();
+    private final Gyroscope gyroscope = new Gyroscope();
+    private final Accelerometer accelerometer = new Accelerometer();
 
     public Genuino101() {
-        initPosition();
+
     }
 
     public Gyroscope getGyroscope() {
-        return mGyro;
+        return this.gyroscope;
     }
-
     public Accelerometer getAccelerometer() {
-        return mAccelerometer;
+        return this.accelerometer;
     }
-
     public BLE getBLE() {
-        return mBLE;
+        return this.ble;
+    }
+    public void bindService(Context context) {
+        Intent gattServiceIntent = new Intent(context, IMUService.class);
+        context.bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
 
-    public void initPosition() {
-        setPotision(0,0,0);
-        setSpeed(0,0,0);
-    }
+    private final ServiceConnection serviceConnection = new ServiceConnection(){
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service){
+            com.example.water.cproject.IMUService IMUService = ((com.example.water.cproject.IMUService.LocalBinder) service).getService();
+            IMUService.initialize();
+        }
 
-    public void setPotision(float x, float y, float z) {
-        positionX = x;
-        positionY = y;
-        positionZ = z;
-    }
-    public float getPositionX() {
-        return positionX;
-    }
-    public float getPositionY() {
-        return positionY;
-    }
-    public float getPositionZ() {
-        return positionZ;
-    }
-
-    public void setSpeed(float x, float y, float z) {
-        speedX = x;
-        speedY = y;
-        speedZ = z;
-    }
-    public float getSpeedX() {
-        return speedX;
-    }
-    public float getSpeedY() {
-        return speedY;
-    }
-    public float getSpeedZ() {
-        return speedZ;
-    }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0){
+        }
+    };
 }

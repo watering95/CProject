@@ -4,8 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -13,18 +11,13 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,83 +25,69 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-
-import static android.content.ContentValues.TAG;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends Activity {
-    private Handler mHandler;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeScanner mBLEScanner;
-    private BLEService mBLEService;
-    private BluetoothGattCharacteristic mNotifyCharacteristic;
-    private BluetoothGattCharacteristic mGyroXCharacteristic;
-    private BluetoothGattCharacteristic mGyroYCharacteristic;
-    private BluetoothGattCharacteristic mGyroZCharacteristic;
-    private BluetoothGattCharacteristic mAcclXCharacteristic;
-    private BluetoothGattCharacteristic mAcclYCharacteristic;
-    private BluetoothGattCharacteristic mAcclZCharacteristic;
-    private BluetoothGattCharacteristic mMotorDirectionCharacteristic;
-    private BluetoothGattCharacteristic mMotorSpeedCharacteristic;
+    private Handler handler;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothLeScanner BLEScanner;
 
-    private ScanSettings settings;
-    private List<ScanFilter> filters;
-    private Machine mMachine;
+    private Machine machine;
+    private final ScheduledJob scheduledJob = new ScheduledJob();
+    private final Timer jobScheduler = new Timer();
 
-    private boolean mScanning;
-    private boolean mScanned;
-    private boolean mfindGenuino;
-    private TextView mDeviceName;
-    private TextView mDeviceAddress;
-    private TextView mDeviceStatus;
-    private TextView mGyroGx;
-    private TextView mGyroGy;
-    private TextView mGyroGz;
-    private TextView mAcclAx;
-    private TextView mAcclAy;
-    private TextView mAcclAz;
-    private TextView mMotorSpeed;
+    private boolean isScanningMachine;
+    private boolean isFindMachine;
+    private TextView peripheralName;
+    private TextView peripheralAddress;
+    private TextView deviceStatus;
+    private TextView motorSpeed;
+    private TextView motorState;
+    private TextView gyroX, gyroY, gyroZ;
+    private TextView accelerometerX, accelerometerY, accelerometerZ;
 
-    private final String LIST_NAME = "NAME";
-    private final String LIST_UUID = "UUID";
-    private final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
-
+    private static final boolean SCAN_START = true;
+    private static final boolean SCAN_STOP = false;
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
-    private String mServiceAddress;
-
-    private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
+    private static final long READ_PERIOD = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mMachine = new Machine();
-        mHandler = new Handler();
-        mBLEService = new BLEService();
+        machine = new Machine();
+        handler = new Handler();
+        peripheralName = findViewById(R.id.deviceName);
+        peripheralAddress = findViewById(R.id.deviceAddress);
+        deviceStatus = findViewById(R.id.deviceStatus);
+        motorSpeed = findViewById(R.id.motorSpeed);
+        motorState = findViewById(R.id.motorState);
 
-        mDeviceName = (TextView) findViewById(R.id.deviceName);
-        mDeviceAddress  = (TextView) findViewById(R.id.deviceAddress);
-        mDeviceStatus = (TextView) findViewById(R.id.deviceStatus);
-        mGyroGx  = (TextView) findViewById(R.id.gyroGx);
-        mGyroGy  = (TextView) findViewById(R.id.gyroGy);
-        mGyroGz  = (TextView) findViewById(R.id.gyroGz);
-        mAcclAx  = (TextView) findViewById(R.id.acclAx);
-        mAcclAy  = (TextView) findViewById(R.id.acclAy);
-        mAcclAz  = (TextView) findViewById(R.id.acclAz);
-        mMotorSpeed = (TextView) findViewById(R.id.motorSpeed);
+        motorSpeed.setText("0");
+        motorState.setText("Stop");
 
-        SeekBar sb = (SeekBar) findViewById(R.id.seekBarSpeed);
+        gyroX = findViewById(R.id.gx);
+        gyroY = findViewById(R.id.gy);
+        gyroZ = findViewById(R.id.gz);
+        accelerometerX = findViewById(R.id.ax);
+        accelerometerY = findViewById(R.id.ay);
+        accelerometerZ = findViewById(R.id.az);
 
-        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        SeekBar sbSpeed = findViewById(R.id.seekBarSpeed);
+        SeekBar sbSpeedLeft = findViewById(R.id.seekBarLeftSpeed);
+        SeekBar sbSpeedRight = findViewById(R.id.seekBarRightSpeed);
+
+        sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mMachine.setRunSpeed(progress);
+                machine.setRunSpeed(progress);
             }
 
             @Override
@@ -119,24 +98,56 @@ public class MainActivity extends Activity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress;
-                progress = mMachine.getRunSpeed();
-                mMotorSpeed.setText(String.valueOf(progress));
-                if(mMotorSpeedCharacteristic != null) mBLEService.writeCharacteristic(mMotorSpeedCharacteristic, progress);
+                progress = machine.getRunSpeed();
+                motorSpeed.setText(String.valueOf(progress));
+            }
+        });
+        sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                machine.setSpeedOffsetLeft(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                machine.setSpeedOffsetRight(progress);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        //BLE Permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int permissionResult = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
 
-            if(permissionResult != PackageManager.PERMISSION_GRANTED) {
-                if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            if (permissionResult != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
                     AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
                     dialog.setTitle("Need Permission").setMessage("This Function need Permission \"COARSE LOCATION\". Continue?")
-                            .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
                                     }
                                 }
                             }).setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -146,11 +157,9 @@ public class MainActivity extends Activity {
                         }
                     }).create().show();
                 } else {
-                    requestPermissions(new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
                 }
-            } else {
             }
-        } else {
         }
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
@@ -164,79 +173,54 @@ public class MainActivity extends Activity {
         // BluetoothAdapter through BluetoothManager.
         final BluetoothManager bluetoothManager =
                 (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        assert bluetoothManager != null;
+        bluetoothAdapter = bluetoothManager.getAdapter();
 
         // Checks if Bluetooth is supported on the device.
-        if (mBluetoothAdapter == null) {
+        if (bluetoothAdapter == null) {
             Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        mBLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        BLEScanner = bluetoothAdapter.getBluetoothLeScanner();
         // Checks if Bluetooth LE Scanner is available.
-        if (mBLEScanner == null) {
+        if (BLEScanner == null) {
             Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
             finish();
-            return;
         }
 
-        BackThread thread = new BackThread();
-        thread.setDaemon(true);
-        thread.start();
+        jobScheduler.scheduleAtFixedRate(scheduledJob, 1000, READ_PERIOD);
     }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        switch (requestCode) {
-            case 1000:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-
-                }
-                break;
-        }
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
-
-        Intent gattServiceIntent = new Intent(this, BLEService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        registerReceiver(broadcastReceiver, machine.makeGattUpdateIntentFilter());
+        machine.bindService(this);
     }
-
-    public void onClick(View v) {
-        if(!mMachine.mGenuino.getBLE().getConnectState()) return;
-        switch(v.getId()) {
-            case R.id.buttonRun:
-                mMachine.setDirection(mMachine.MACHINE_FORWARD);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_FORWARD);
-                break;
-            case R.id.buttonStop:
-                mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
-                break;
-            case R.id.buttonRight:
-                mMachine.setDirection(mMachine.MACHINE_RIGHT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_RIGHT);
-                break;
-            case R.id.buttonLeft:
-                mMachine.setDirection(mMachine.MACHINE_LEFT);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_LEFT);
-                break;
-            case R.id.buttonBack:
-                mMachine.setDirection(mMachine.MACHINE_BACKWARD);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_BACKWARD);
-                break;
-            default:
-                mMachine.setDirection(mMachine.MACHINE_STOP);
-                mBLEService.writeCharacteristic(mMotorDirectionCharacteristic, mMachine.MACHINE_STOP);
-                break;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!bluetoothAdapter.isEnabled()) {
+            if (!bluetoothAdapter.isEnabled()) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
         }
+        scanBLEDevice(SCAN_START);
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        scanBLEDevice(SCAN_STOP);
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        machine.commClose();
+        unregisterReceiver(broadcastReceiver);
     }
 
     @Override
@@ -245,24 +229,23 @@ public class MainActivity extends Activity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
-
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if(mMachine.mGenuino.getBLE().getConnectState()) {
+        if (machine.getControlBoard().getBLE().getConnectState()) {
             menu.findItem(R.id.menu_scan).setVisible(false);
             menu.findItem(R.id.menu_connect).setVisible(false);
             menu.findItem(R.id.menu_disconnect).setVisible(true);
-            menu.findItem(R.id.menu_stop).setVisible(true);
+            menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_refresh).setActionView(null);
         } else {
-            if(mfindGenuino) {
+            if (isFindMachine) {
                 menu.findItem(R.id.menu_scan).setVisible(false);
                 menu.findItem(R.id.menu_connect).setVisible(true);
                 menu.findItem(R.id.menu_disconnect).setVisible(false);
                 menu.findItem(R.id.menu_stop).setVisible(true);
                 menu.findItem(R.id.menu_refresh).setActionView(null);
             } else {
-                if (mScanning) {
+                if (isScanningMachine) {
                     menu.findItem(R.id.menu_scan).setVisible(false);
                     menu.findItem(R.id.menu_connect).setVisible(false);
                     menu.findItem(R.id.menu_disconnect).setVisible(false);
@@ -279,87 +262,145 @@ public class MainActivity extends Activity {
         }
         return super.onPrepareOptionsMenu(menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_scan:
-                scanBLEDevice(true);
+                scanBLEDevice(SCAN_START);
                 break;
             case R.id.menu_stop:
-                mBLEService.disconnect();
-                scanBLEDevice(false);
+                scanBLEDevice(SCAN_STOP);
                 break;
             case R.id.menu_connect:
-                mBLEService.connect(mServiceAddress);
+                machine.commConnect();
                 break;
             case R.id.menu_disconnect:
-                mBLEService.disconnect();
+                machine.commDisconnect();
                 break;
         }
         return true;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
-        if (mBLEService != null) {
-            final boolean result = mBLEService.connect(mServiceAddress);
-            Log.d(TAG, "Connect request result=" + result);
+    public void onClick(View v) {
+        if (!machine.getControlBoard().getBLE().getConnectState()) return;
+        switch (v.getId()) {
+            case R.id.buttonRun:
+                machine.transferMovingOperation(machine.MACHINE_FORWARD);
+                break;
+            case R.id.buttonStop:
+                machine.transferMovingOperation(machine.MACHINE_STOP);
+                break;
+            case R.id.buttonRight:
+                machine.transferMovingOperation(machine.MACHINE_RIGHT);
+                break;
+            case R.id.buttonLeft:
+                machine.transferMovingOperation(machine.MACHINE_LEFT);
+                break;
+            case R.id.buttonBack:
+                machine.transferMovingOperation(machine.MACHINE_BACKWARD);
+                break;
+            default:
+                machine.transferMovingOperation(machine.MACHINE_STOP);
+                break;
         }
+    }
 
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @SuppressWarnings("NullableProblems") String[] permissions, @SuppressWarnings("NullableProblems") int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case 1000:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+
+                }
+                break;
+        }
+    }
+
+    private void displayConnectionState(final int resourceId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                deviceStatus.setText(resourceId);
             }
+        });
+    }
+    private void displayMotorState(int state) {
+        switch(state) {
+            case 1:
+                motorState.setText("Run");
+                break;
+            case 4:
+                motorState.setText("Back");
+                break;
+            case 3:
+                motorState.setText("Left");
+                break;
+            case 2:
+                motorState.setText("Right");
+                break;
+            case 0:
+                motorState.setText("Stop");
+                break;
         }
-        scanBLEDevice(true);
+    }
+    private void displayData(Gyroscope gyro) {
+        gyroX.setText(String.format(Locale.getDefault(), "%.03f",gyro.getX()));
+        gyroY.setText(String.format(Locale.getDefault(), "%.03f",gyro.getY()));
+        gyroZ.setText(String.format(Locale.getDefault(), "%.03f",gyro.getZ()));
+    }
+    private void displayData(Accelerometer accelerometer) {
+        accelerometerX.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getX()));
+        accelerometerY.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getY()));
+        accelerometerZ.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getZ()));
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        scanBLEDevice(false);
-    }
+    private void scanBLEDevice(boolean isScan) {
+        final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
 
-    private void scanBLEDevice(final boolean enable) {
-
-        settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
-        filters = new ArrayList<ScanFilter>();
+        ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build();
+        List<ScanFilter> filters = new ArrayList<>();
         ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(DEFAULT_BLE_ADDRESS).build();
+
         filters.add(filter);
 
-        if (enable) {
+        if (isScan) {
             // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
+            handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
-                    mBLEScanner.stopScan(mScanCallback);
+                    BLEScanner.stopScan(scanCallback);
+                    isScanningMachine = false;
+                    if(!machine.getControlBoard().getBLE().getConnectState()) {
+                        isFindMachine = false;
+                        peripheralName.setText("No Device");
+                        peripheralAddress.setText("No Device");
+                        displayConnectionState(R.string.stop_ble_scan);
+                    }
+                    invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
-            mScanning = true;
-            mBLEScanner.startScan(filters, settings, mScanCallback);
-            updateConnectionState(R.string.ble_scanning);
-            invalidateOptionsMenu();
+            BLEScanner.startScan(filters, settings, scanCallback);
+            isScanningMachine = true;
+            isFindMachine = false;
+            displayConnectionState(R.string.scan_ble);
         } else {
-            mScanning = false;
-            mfindGenuino = false;
-            mBLEScanner.stopScan(mScanCallback);
-            updateConnectionState(R.string.ble_stopscan);
-            mDeviceName.setText("No Device");
-            mDeviceAddress.setText("No Device");
-            mServiceAddress = null;
-            invalidateOptionsMenu();
+            BLEScanner.stopScan(scanCallback);
+            isScanningMachine = false;
+            if(!machine.getControlBoard().getBLE().getConnectState()) {
+                isFindMachine = false;
+                peripheralName.setText("No Device");
+                peripheralAddress.setText("No Device");
+                displayConnectionState(R.string.stop_ble_scan);
+            }
         }
+        invalidateOptionsMenu();
     }
 
-    private ScanCallback mScanCallback = new ScanCallback() {
+    private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             processResult(result);
@@ -375,6 +416,11 @@ public class MainActivity extends Activity {
         @Override
         public void onScanFailed(int errorCode) {
             Toast.makeText(MainActivity.this, String.valueOf(errorCode), Toast.LENGTH_SHORT).show();
+            isScanningMachine = false;
+            isFindMachine = false;
+            peripheralName.setText("No Device");
+            peripheralAddress.setText("No Device");
+            displayConnectionState(R.string.fail_ble_scan);
             invalidateOptionsMenu();
         }
 
@@ -382,36 +428,20 @@ public class MainActivity extends Activity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(!mfindGenuino) {
-                        mMachine.mGenuino.getBLE().setName(result.getDevice().getName());
-                        mDeviceName.setText(mMachine.mGenuino.getBLE().getName());
-                        mMachine.mGenuino.getBLE().setAddress(result.getDevice().getAddress());
-                        mServiceAddress = mMachine.mGenuino.getBLE().getAddress();
-                        mDeviceAddress.setText(mServiceAddress);
-                        updateConnectionState(R.string.ble_scan_finish);
-                        mfindGenuino = true;
+                    if (!isFindMachine && result != null) {
+                        BLE ble = machine.getControlBoard().getBLE();
+
+                        ble.setName(result.getDevice().getName());
+                        peripheralName.setText(ble.getName());
+                        ble.setPeripheralAddress(result.getDevice().getAddress());
+                        peripheralAddress.setText(ble.getPeripheralAddress());
+                        displayConnectionState(R.string.success_ble_scan);
+                        isFindMachine = true;
+                        machine.commConnect();
                         invalidateOptionsMenu();
                     }
                 }
             });
-        }
-    };
-
-    private ServiceConnection mServiceConnection = new ServiceConnection(){
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service){
-            mBLEService = ((BLEService.LocalBinder) service).getService();
-            if (!mBLEService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                finish();
-            }
-            // Automatically connects to the device upon successful start-up initialization.
-            mBLEService.connect(mServiceAddress);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0){
         }
     };
 
@@ -421,185 +451,52 @@ public class MainActivity extends Activity {
     // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
     // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
     //                        or notification operations.
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+            Gyroscope gyro = machine.getControlBoard().getGyroscope();
+            Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
+
             if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-                mMachine.mGenuino.getBLE().setConnect();
-                updateConnectionState(R.string.ble_connected);
+                machine.getControlBoard().getBLE().setConnectState(true);
+                scanBLEDevice(SCAN_STOP);
+                displayConnectionState(R.string.ble_connected);
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mMachine.mGenuino.getBLE().setDisconnect();
-                updateConnectionState(R.string.ble_disconnected);
-                clearUI();
+                displayConnectionState(R.string.ble_disconnected);
+                machine.getControlBoard().getBLE().setConnectState(false);
+                isFindMachine = false;
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Select Genuino services and characteristics on the user interface.
-                selectGenuinoGattServices(mBLEService.getSupportedGattServices());
-            } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
-                float gx = mMachine.mGenuino.getGyroscope().getGx();
-                float gy = mMachine.mGenuino.getGyroscope().getGy();
-                float gz = mMachine.mGenuino.getGyroscope().getGz();
-                float ax = mMachine.mGenuino.getAccelerometer().getAx();
-                float ay = mMachine.mGenuino.getAccelerometer().getAy();
-                float az = mMachine.mGenuino.getAccelerometer().getAz();
+                machine.getGattServices();
+                machine.readMachineState();
+            } else if (IMUService.ACTION.equals(action)) {
+                Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
-                if(intent.getStringExtra(BLEService.GYRO_X_DATA) != null) {
-                    gx = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_X_DATA));
-                }
-                if(intent.getStringExtra(BLEService.GYRO_Y_DATA) != null) {
-                    gy = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_Y_DATA));
-                }
-                if(intent.getStringExtra(BLEService.GYRO_Z_DATA) != null) {
-                    gz = Float.parseFloat(intent.getStringExtra(BLEService.GYRO_Z_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_X_DATA) != null) {
-                    ax = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_X_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_Y_DATA) != null) {
-                    ay = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_Y_DATA));
-                }
-                if(intent.getStringExtra(BLEService.ACCL_Z_DATA) != null) {
-                    az = Float.parseFloat(intent.getStringExtra(BLEService.ACCL_Z_DATA));
-                }
+                int state = bundle.getInt("state");
+                float imu[] = bundle.getFloatArray("imu");
 
-                mMachine.mGenuino.getGyroscope().updateData(gx, gy, gz);
-                mMachine.mGenuino.getAccelerometer().updateData(ax, ay, az);
+                machine.setMachineState(state);
 
-                displayData(mMachine.mGenuino.getGyroscope().getData());
-                displayData(mMachine.mGenuino.getAccelerometer().getData());
+                assert imu != null;
+                gyro.updateData(imu[0], imu[1], imu[2]);
+                accelerometer.updateData(imu[3], imu[4], imu[5]);
+
+                displayData(gyro.getData());
+                displayData(accelerometer.getData());
+                displayMotorState(machine.getMachineState());
             }
         }
     };
 
-    private void clearUI() {
-        mGyroGx.setText(R.string.no_data);
-        mGyroGy.setText(R.string.no_data);
-        mGyroGz.setText(R.string.no_data);
-        mAcclAx.setText(R.string.no_data);
-        mAcclAy.setText(R.string.no_data);
-        mAcclAz.setText(R.string.no_data);
-    }
-
-    private void updateConnectionState(final int resourceId) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mDeviceStatus.setText(resourceId);
-            }
-        });
-    }
-
-    // Demonstrates how to iterate through the supported GATT Services/Characteristics.
-    // In this sample, we populate the data structure that is bound to the ExpandableListView
-    // on the UI.
-    private void selectGenuinoGattServices(List<BluetoothGattService> gattServices) {
-        if (gattServices == null) return;
-        String uuid = null;
-        String unknownServiceString = getResources().getString(R.string.ble_unknown_service);
-        String unknownCharaString = getResources().getString(R.string.ble_unknown_characteristic);
-        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<HashMap<String, String>>();
-        ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData
-                = new ArrayList<ArrayList<HashMap<String, String>>>();
-        mGattCharacteristics = new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
-
-        // Loops through available GATT Services.
-        for (BluetoothGattService gattService : gattServices) {
-            HashMap<String, String> currentServiceData = new HashMap<String, String>();
-            uuid = gattService.getUuid().toString();
-            currentServiceData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownServiceString));
-            currentServiceData.put(LIST_UUID, uuid);
-            gattServiceData.add(currentServiceData);
-
-            ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<HashMap<String, String>>();
-            List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
-            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<BluetoothGattCharacteristic>();
-
-            // Loops through available Characteristics.
-            for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-                charas.add(gattCharacteristic);
-                HashMap<String, String> currentCharaData = new HashMap<String, String>();
-                uuid = gattCharacteristic.getUuid().toString();
-                if(uuid.equals(BLEService.UUID_GYRO_X_MEASUREMENT.toString())) {
-                    mGyroXCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_GYRO_Y_MEASUREMENT.toString())) {
-                    mGyroYCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_GYRO_Z_MEASUREMENT.toString())) {
-                    mGyroZCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_X_MEASUREMENT.toString())) {
-                    mAcclXCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_Y_MEASUREMENT.toString())) {
-                    mAcclYCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_ACCL_Z_MEASUREMENT.toString())) {
-                    mAcclZCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_MOTOR_DIRECTION.toString())) {
-                    mMotorDirectionCharacteristic = gattCharacteristic;
-                } else if(uuid.equals(BLEService.UUID_MOTOR_SPEED.toString())) {
-                    mMotorSpeedCharacteristic = gattCharacteristic;
-                }
-
-                currentCharaData.put(LIST_NAME, gattAttributes.lookup(uuid, unknownCharaString));
-                currentCharaData.put(LIST_UUID, uuid);
-                gattCharacteristicGroupData.add(currentCharaData);
-            }
-
-            mGattCharacteristics.add(charas);
-            gattCharacteristicData.add(gattCharacteristicGroupData);
-        }
-    }
-
-    private void displayData(Gyroscope gyro) {
-        mGyroGx.setText(String.valueOf(gyro.getGx()));
-        mGyroGy.setText(String.valueOf(gyro.getGy()));
-        mGyroGz.setText(String.valueOf(gyro.getGz()));
-    }
-
-    private void displayData(Accelerometer accl) {
-        mAcclAx.setText(String.valueOf(accl.getAx()));
-        mAcclAy.setText(String.valueOf(accl.getAy()));
-        mAcclAz.setText(String.valueOf(accl.getAz()));
-    }
-
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
-    }
-
-    class BackThread extends Thread {
+    class ScheduledJob extends TimerTask {
         public void run() {
-            while(true) {
-//                updateData(mGyroXCharacteristic);
-//                updateData(mGyroYCharacteristic);
-//                updateData(mGyroZCharacteristic);
-//                updateData(mAcclXCharacteristic);
-//                updateData(mAcclYCharacteristic);
-//                updateData(mAcclZCharacteristic);
-            }
-        }
-
-        void updateData(BluetoothGattCharacteristic characteristic) {
-            if (characteristic != null) {
-                final int charaProp = characteristic.getProperties();
-
-                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-                    // If there is an active notification on a characteristic, clear
-                    // it first so it doesn't update the data field on the user interface.
-                    if (mNotifyCharacteristic != null) {
-                        mBLEService.setCharacteristicNotification(mNotifyCharacteristic, false);
-                        mNotifyCharacteristic = null;
-                    }
-                    mBLEService.readCharacteristic(characteristic);
-                }
-                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-                    mNotifyCharacteristic = characteristic;
-                    mBLEService.setCharacteristicNotification(characteristic, true);
-                }
+            if(machine.getControlBoard().getBLE().getConnectState()) {
+                machine.readMachineState();
             }
         }
     }
 }
+

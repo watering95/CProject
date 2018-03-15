@@ -4,29 +4,30 @@ package com.example.water.cproject;
  * Created by water on 2017-04-18.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class Accelerometer {
-    private float mAx, mAy, mAz;
+    private float x, y, z;
 
     public Accelerometer() {
         updateData(0,0,0);
     }
 
     public void updateData(float x, float y, float z) {
-        mAx = x;
-        mAy = y;
-        mAz = z;
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public Accelerometer getData() {
         return this;
     }
-    public float getAx() {
-        return mAx;
+    public float getX() {
+        return x;
     }
-    public float getAy() {
-        return mAy;
+    public float getY() {
+        return y;
     }
-    public float getAz() {
-        return mAz;
+    public float getZ() {
+        return z;
     }
 }
