@@ -210,9 +210,13 @@ public class BLEService extends Service {
 
         while(!success) {
             success = bluetoothGatt.writeCharacteristic(characteristic);
-            if(i > 100) break;
+            if(i > 5) {
+                Log.i(TAG, "Fail to write characteristic");
+                break;
+            }
             i++;
         }
+        if(success) Log.i(TAG, "Succeed to write characteristic : " + i );
     }
 
     /**

@@ -14,6 +14,7 @@ import java.util.List;
 
 import static android.content.ContentValues.TAG;
 import static android.content.Context.BIND_AUTO_CREATE;
+import static android.os.SystemClock.sleep;
 
 /**
  * Created by water on 2017-04-18.
@@ -63,6 +64,7 @@ public class BLE {
         context.bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
     void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
+        sleep(10);
         BLEService.writeCharacteristic(characteristic, data);
     }
     void readCharacteristic(BluetoothGattCharacteristic characteristic) {

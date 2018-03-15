@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -41,16 +42,13 @@ public class IMUService extends Service {
     }
 
     private final IBinder binder = new IMUService.LocalBinder();
-    private void broadcastUpdate(final String action, float[] data) {
+    private void broadcastUpdate(final String action, Bundle data) {
         final Intent intent = new Intent(action);
 
         intent.putExtra(DATA, data);
         sendBroadcast(intent);
     }
-    private String getString(ByteBuffer buffer) {
-        byte[] data = new byte[buffer.remaining()];
-        buffer.get(data);
-
+    private String getString(byte[] data) {
         return new String(data);
     }
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -65,10 +63,11 @@ public class IMUService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+            final Bundle bundleBLE = new Bundle();
 
             if (ACTION_DATA_AVAILABLE.equals(action)) {
                 ByteBuffer receiveBuffer = ByteBuffer.wrap(intent.getByteArrayExtra(gattAttributes.MACHINE_STATE));
-                Map<String, ByteBuffer> byteBuffers = new ArrayMap<>();
+                Map<String, byte[]> byteMaps = new ArrayMap<>();
                 String key[] = {"machineState", "gx", "gy", "gz", "ax", "ay", "az"};
 
                 byte b;
@@ -77,28 +76,36 @@ public class IMUService extends Service {
                     ByteBuffer byteBuffer = ByteBuffer.allocate(20);
 
                     do {
-                        b = receiveBuffer.get();
+                        if(receiveBuffer.hasRemaining()) b = receiveBuffer.get();
+                        else break;
 
                         if (b != ',') {
                             byteBuffer.put(b);
                         } else {
                             byteBuffer.flip();
-                            byteBuffers.put(aKey, byteBuffer);
+                            byte[] data = new byte[byteBuffer.remaining()];
+                            byteBuffer.get(data);
+                            byteMaps.put(aKey, data);
                             byteBuffer.clear();
                         }
                     } while (b != ',');
                 }
 
                 try {
-                    float data[] = new float[6];
-                    for (int i = 0; i < 6; i++) {
-                        data[i] = Float.valueOf(getString(byteBuffers.get(key[i + 1])));
-                    }
-                    byteBuffers.clear();
+                    int state = Integer.valueOf(getString(byteMaps.get(key[0])));
+                    float[] imu = new float[6];
 
-                    broadcastUpdate(ACTION, data);
+                    for (int i = 0; i < 6; i++) {
+                        imu[i] = Float.valueOf(getString(byteMaps.get(key[i + 1])));
+                    }
+                    byteMaps.clear();
+
+                    bundleBLE.putInt("state",state);
+                    bundleBLE.putFloatArray("imu",imu);
+
+                    broadcastUpdate(ACTION, bundleBLE);
                 } catch (Exception e) {
-                    Log.i(TAG, "Byte[] to String convert Error");
+                    Log.e(TAG, e.toString());
                 }
             }
         }

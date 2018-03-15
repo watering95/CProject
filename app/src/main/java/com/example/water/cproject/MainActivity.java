@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
+    private static final long READ_PERIOD = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,13 +189,14 @@ public class MainActivity extends Activity {
             Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
             finish();
         }
+
+        jobScheduler.scheduleAtFixedRate(scheduledJob, 1000, READ_PERIOD);
     }
     @Override
     protected void onStart() {
         super.onStart();
         registerReceiver(broadcastReceiver, machine.makeGattUpdateIntentFilter());
         machine.bindService(this);
-        jobScheduler.scheduleAtFixedRate(scheduledJob, 1000, 100);
     }
     @Override
     protected void onResume() {
@@ -219,7 +221,6 @@ public class MainActivity extends Activity {
         super.onStop();
         machine.commClose();
         unregisterReceiver(broadcastReceiver);
-        jobScheduler.cancel();
     }
 
     @Override
@@ -472,10 +473,16 @@ public class MainActivity extends Activity {
                 machine.getGattServices();
                 machine.readMachineState();
             } else if (IMUService.ACTION.equals(action)) {
-                float data[] = intent.getFloatArrayExtra(IMUService.DATA);
+                Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
-                gyro.updateData(data[0], data[1], data[2]);
-                accelerometer.updateData(data[3], data[4], data[5]);
+                int state = bundle.getInt("state");
+                float imu[] = bundle.getFloatArray("imu");
+
+                machine.setMachineState(state);
+
+                assert imu != null;
+                gyro.updateData(imu[0], imu[1], imu[2]);
+                accelerometer.updateData(imu[3], imu[4], imu[5]);
 
                 displayData(gyro.getData());
                 displayData(accelerometer.getData());
