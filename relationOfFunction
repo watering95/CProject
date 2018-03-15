@@ -1,0 +1,48 @@
+MainActivity - onCreate()                 - bluetoothAdapter = BluetoothManager.getAdapter()
+                                            BLESCanner = bluetoothAdapter.getBluetoothLeScanner()
+             - onStart()                  - registerReceiver(gattUpdateReceiver)
+                                          - machine.bindBLEService()
+             - onResume()                 - scanBLEDevice(START)
+             - onPause()                  - scanBLEDevice(STOP) 
+             - onOptionItemSelected()     - scanBLEDevice(START)
+                                          - scanBLEDevice(STOP)
+             - scanBLEDevice()            - BLEScanner.startScan()
+                                          - BLEScanner.stopScan()
+
+                                          - machine.commConnect()
+                                          - machine.commDisconnect()
+                                          - machine.read...()
+                                          - machine.transferMovingOperation()
+
+             - bluetoothAdapter = BluetoothManager.getAdapter()
+             - BLEScanner = bluetoothAdapter.getBluetoothLeScanner()
+             - gattUpdateReceiver = new BroadcastReceiver(context, intent)
+
+Machine      - bindBLEService()           - ble.bindService()
+             - commConnect()              - ble.connect()
+             - commDisconnect()           - ble.disconnect()
+             - read...()                  - ble.readCharacteristic()
+             - transferMovingOperation()  - ble.writeCharacteristic()
+
+BLE          - bindService()              - gattServiceIntent = new Intext(context, BLEService.class)
+                                          - context.bindService(gattServiceIntent, serviceConnection)
+             - connect()                  - BLEService.connect()
+             - disconnect()               - BLEService.disconnect()
+             - writeCharacteristic()      - BLEService.writeCharacteristic()
+             - readCharacteristic()       - BLEService.readCharacteristic()
+             - gattSupportedGattService() - BLEService.getSupportedGattServices()
+
+             - serviceConnection = new ServiceConnection()
+             - ServiceConnection          - BLEService.initialize()
+
+BLEService   - connect()                  - bluetoothGatt.device.connectGatt(gattCallback)
+             - disconnect()               - bluetoothGatt.disconnect()
+             - close()                    - bluetoothGatt = null
+             - getSupportedGattServices() - bluetoothGatt.getServices()
+             - broadcastUpdate()          - intent.putExtra()
+                                          - sendBroadcast(gattAttributes)
+
+             - gattCallback               - broadcastUpdate()
+             - gattAttribute              - intent
+                                          - characteristic
+
