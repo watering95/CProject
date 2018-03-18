@@ -15,11 +15,11 @@ import static com.example.water.cproject.IMUService.ACTION;
 
 @SuppressWarnings("DefaultFileTemplate")
 class Machine {
-    final int MACHINE_FORWARD = 1;
-    final int MACHINE_BACKWARD = 4;
-    final int MACHINE_LEFT = 3;
-    final int MACHINE_RIGHT = 2;
-    final int MACHINE_STOP = 0;
+    final int MOTOR_FORWARD = 1;
+    final int MOTOR_BACKWARD = 4;
+    final int MOTOR_LEFT = 3;
+    final int MOTOR_RIGHT = 2;
+    final int MOTOR_STOP = 0;
 
     private final Genuino101 genuino = new Genuino101();
     private final BLE ble = genuino.getBLE();
@@ -30,7 +30,7 @@ class Machine {
     private BluetoothGattCharacteristic mCharacteristicMachineState;
 
     private int speedMain = 0, speedOffsetLeft, speedOffsetRight;
-    private int machineState;
+    private int motorState;
 
     Machine() {
 
@@ -42,8 +42,8 @@ class Machine {
     int getRunSpeed() {
         return this.speedMain;
     }
-    int getMachineState() {
-        return this.machineState;
+    int getMotorState() {
+        return this.motorState;
     }
 
     void setRunSpeed(int speed) {
@@ -55,8 +55,8 @@ class Machine {
     void setSpeedOffsetRight(int speed) {
         this.speedOffsetRight = speed;
     }
-    void setMachineState(int state) {
-        this.machineState = state;
+    void setMotorState(int state) {
+        this.motorState = state;
     }
 
     void transferMovingOperation(int direction) {
@@ -97,35 +97,16 @@ class Machine {
     // In this sample, we populate the data structure that is bound to the ExpandableListView
     // on the UI.
     private void getGattServices(List<BluetoothGattService> gattServices) {
-//        ArrayList<HashMap<String, String>> gattServiceData = new ArrayList<>();
-//        ArrayList<ArrayList<HashMap<String, String>>> gattCharacteristicData = new ArrayList<>();
-//        ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
-
         String uuid;
 
         if (gattServices == null) return;
 
         // Loops through available GATT Services.
         for (BluetoothGattService gattService : gattServices) {
-//            String LIST_NAME = "NAME";
-//            String LIST_UUID = "UUID";
-
-//            HashMap<String, String> currentServiceData = new HashMap<>();
-
-//            uuid = gattService.getUuid().toString();
-
-//            currentServiceData.put(LIST_NAME, gattAttributes.lookup(uuid, "Unknown service"));
-//            currentServiceData.put(LIST_UUID, uuid);
-//            gattServiceData.add(currentServiceData);
-
-//            ArrayList<HashMap<String, String>> gattCharacteristicGroupData = new ArrayList<>();
-//            ArrayList<BluetoothGattCharacteristic> charas = new ArrayList<>();
             List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
 
             // Loops through available Characteristics.
             for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-//                charas.add(gattCharacteristic);
-//                HashMap<String, String> currentCharaData = new HashMap<>();
                 uuid = gattCharacteristic.getUuid().toString();
                 switch (uuid) {
                     case gattAttributes.UUID_MOTOR_DIRECTION:
@@ -141,14 +122,7 @@ class Machine {
                         mCharacteristicMachineState = gattCharacteristic;
                         break;
                 }
-
-//                currentCharaData.put(LIST_NAME, gattAttributes.lookup(uuid, "Unknown characteristic"));
-//                currentCharaData.put(LIST_UUID, uuid);
-//                gattCharacteristicGroupData.add(currentCharaData);
             }
-
-//            mGattCharacteristics.add(charas);
-//            gattCharacteristicData.add(gattCharacteristicGroupData);
         }
     }
 }

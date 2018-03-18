@@ -1,8 +1,9 @@
 package com.example.water.cproject;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -15,40 +16,40 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.design.widget.TabLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private Handler handler;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner BLEScanner;
+    private String dataCode;
+    private boolean dataRecord;
 
-    private Machine machine;
+    public final DBResolver resolver = new DBResolver(this);
+
+    Machine machine;
     private final ScheduledJob scheduledJob = new ScheduledJob();
     private final Timer jobScheduler = new Timer();
 
     private boolean isScanningMachine;
     private boolean isFindMachine;
-    private TextView peripheralName;
-    private TextView peripheralAddress;
-    private TextView deviceStatus;
-    private TextView motorSpeed;
-    private TextView motorState;
-    private TextView gyroX, gyroY, gyroZ;
-    private TextView accelerometerX, accelerometerY, accelerometerZ;
+
 
     private static final boolean SCAN_START = true;
     private static final boolean SCAN_STOP = false;
@@ -57,138 +58,45 @@ public class MainActivity extends Activity {
     private static final long SCAN_PERIOD = 10000;
     private static final long READ_PERIOD = 1000;
 
+    private FragmentManager fragmentManager;
+    private FragmentTransaction fragmentTransaction;
+    private Fragment1 fragment1;
+    private Fragment2 fragment2;
+
+    private Frag1Callback frag1Callback;
+    private Frag2Callback frag2Callback;
+
+    interface Frag1Callback {
+        void updateMachineState(int resourceId);
+        void updateMotorState(int state);
+        void updateGyro(Gyroscope gyro);
+        void updateAccelerometer(Accelerometer accelerometer);
+        void updatePeripheral(String name, String address);
+    }
+    interface Frag2Callback {
+
+    }
+
+    public void setFrag1Callback(Frag1Callback callback) {
+        this.frag1Callback = callback;
+    }
+    public void setFrag2Callback(Frag2Callback callback) {
+        this.frag2Callback = callback;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        resolver.getContentResolver(getContentResolver());
+
+        initLayout();
+        initBLE();
+        blePermission();
+
         machine = new Machine();
         handler = new Handler();
-        peripheralName = findViewById(R.id.deviceName);
-        peripheralAddress = findViewById(R.id.deviceAddress);
-        deviceStatus = findViewById(R.id.deviceStatus);
-        motorSpeed = findViewById(R.id.motorSpeed);
-        motorState = findViewById(R.id.motorState);
-
-        motorSpeed.setText("0");
-        motorState.setText("Stop");
-
-        gyroX = findViewById(R.id.gx);
-        gyroY = findViewById(R.id.gy);
-        gyroZ = findViewById(R.id.gz);
-        accelerometerX = findViewById(R.id.ax);
-        accelerometerY = findViewById(R.id.ay);
-        accelerometerZ = findViewById(R.id.az);
-
-        SeekBar sbSpeed = findViewById(R.id.seekBarSpeed);
-        SeekBar sbSpeedLeft = findViewById(R.id.seekBarLeftSpeed);
-        SeekBar sbSpeedRight = findViewById(R.id.seekBarRightSpeed);
-
-        sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                machine.setRunSpeed(progress);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                int progress;
-                progress = machine.getRunSpeed();
-                motorSpeed.setText(String.valueOf(progress));
-            }
-        });
-        sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                machine.setSpeedOffsetLeft(progress);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-        sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                machine.setSpeedOffsetRight(progress);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        //BLE Permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int permissionResult = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
-
-            if (permissionResult != PackageManager.PERMISSION_GRANTED) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-                    AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
-                    dialog.setTitle("Need Permission").setMessage("This Function need Permission \"COARSE LOCATION\". Continue?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
-                                    }
-                                }
-                            }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Toast.makeText(MainActivity.this, "Cancel Function", Toast.LENGTH_SHORT).show();
-                        }
-                    }).create().show();
-                } else {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
-                }
-            }
-        }
-
-        // Use this check to determine whether BLE is supported on the device.  Then you can
-        // selectively disable BLE-related features.
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-            finish();
-        }
-
-        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
-        // BluetoothAdapter through BluetoothManager.
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        assert bluetoothManager != null;
-        bluetoothAdapter = bluetoothManager.getAdapter();
-
-        // Checks if Bluetooth is supported on the device.
-        if (bluetoothAdapter == null) {
-            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-        BLEScanner = bluetoothAdapter.getBluetoothLeScanner();
-        // Checks if Bluetooth LE Scanner is available.
-        if (BLEScanner == null) {
-            Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
-            finish();
-        }
 
         jobScheduler.scheduleAtFixedRate(scheduledJob, 1000, READ_PERIOD);
     }
@@ -285,22 +193,26 @@ public class MainActivity extends Activity {
         if (!machine.getControlBoard().getBLE().getConnectState()) return;
         switch (v.getId()) {
             case R.id.buttonRun:
-                machine.transferMovingOperation(machine.MACHINE_FORWARD);
+                machine.transferMovingOperation(machine.MOTOR_FORWARD);
+                dataRecord = true;
+                makeCode();
                 break;
             case R.id.buttonStop:
-                machine.transferMovingOperation(machine.MACHINE_STOP);
+                machine.transferMovingOperation(machine.MOTOR_STOP);
+                dataRecord = false;
                 break;
             case R.id.buttonRight:
-                machine.transferMovingOperation(machine.MACHINE_RIGHT);
+                machine.transferMovingOperation(machine.MOTOR_RIGHT);
                 break;
             case R.id.buttonLeft:
-                machine.transferMovingOperation(machine.MACHINE_LEFT);
+                machine.transferMovingOperation(machine.MOTOR_LEFT);
                 break;
             case R.id.buttonBack:
-                machine.transferMovingOperation(machine.MACHINE_BACKWARD);
+                machine.transferMovingOperation(machine.MOTOR_BACKWARD);
                 break;
             default:
-                machine.transferMovingOperation(machine.MACHINE_STOP);
+                machine.transferMovingOperation(machine.MOTOR_STOP);
+                dataRecord = false;
                 break;
         }
     }
@@ -320,44 +232,112 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void initLayout() {
+        TabLayout mainTabLayout = findViewById(R.id.tab_main);
+
+        mainTabLayout.setTabTextColors(Color.parseColor("#ffffff"),Color.parseColor("#00ff00"));
+        mainTabLayout.addTab(mainTabLayout.newTab().setText("main"));
+        mainTabLayout.addTab(mainTabLayout.newTab().setText("monitor"));
+        mainTabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+        fragmentManager = getSupportFragmentManager();
+        fragment1 = new Fragment1();
+        fragment2 = new Fragment2();
+
+        fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.add(R.id.frame_main, fragment1).commit();
+
+        mainTabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                switch (tab.getPosition()) {
+                    case 0:
+                        fragmentTransaction = fragmentManager.beginTransaction();
+                        fragmentTransaction.replace(R.id.frame_main, fragment1).commit();
+                        break;
+                    case 1:
+                        fragmentTransaction = fragmentManager.beginTransaction();
+                        fragmentTransaction.replace(R.id.frame_main, fragment2).commit();
+                        break;
+                }
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+    }
+    private void blePermission() {
+        //BLE Permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            int permissionResult = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+            if (permissionResult != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+                    dialog.setTitle("Need Permission").setMessage("This Function need Permission \"COARSE LOCATION\". Continue?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                                    }
+                                }
+                            }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Toast.makeText(MainActivity.this, "Cancel Function", Toast.LENGTH_SHORT).show();
+                        }
+                    }).create().show();
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1000);
+                }
+            }
+        }
+
+        // Use this check to determine whether BLE is supported on the device.  Then you can
+        // selectively disable BLE-related features.
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+    private void initBLE() {
+        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+        // BluetoothAdapter through BluetoothManager.
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        assert bluetoothManager != null;
+        bluetoothAdapter = bluetoothManager.getAdapter();
+
+        // Checks if Bluetooth is supported on the device.
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        BLEScanner = bluetoothAdapter.getBluetoothLeScanner();
+        // Checks if Bluetooth LE Scanner is available.
+        if (BLEScanner == null) {
+            Toast.makeText(this, R.string.ble_scanner_not_find, Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
     private void displayConnectionState(final int resourceId) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                deviceStatus.setText(resourceId);
+                if(frag1Callback != null) frag1Callback.updateMachineState(resourceId);
             }
         });
     }
-    private void displayMotorState(int state) {
-        switch(state) {
-            case 1:
-                motorState.setText("Run");
-                break;
-            case 4:
-                motorState.setText("Back");
-                break;
-            case 3:
-                motorState.setText("Left");
-                break;
-            case 2:
-                motorState.setText("Right");
-                break;
-            case 0:
-                motorState.setText("Stop");
-                break;
-        }
-    }
-    private void displayData(Gyroscope gyro) {
-        gyroX.setText(String.format(Locale.getDefault(), "%.03f",gyro.getX()));
-        gyroY.setText(String.format(Locale.getDefault(), "%.03f",gyro.getY()));
-        gyroZ.setText(String.format(Locale.getDefault(), "%.03f",gyro.getZ()));
-    }
-    private void displayData(Accelerometer accelerometer) {
-        accelerometerX.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getX()));
-        accelerometerY.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getY()));
-        accelerometerZ.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getZ()));
-    }
-
     private void scanBLEDevice(boolean isScan) {
         final String DEFAULT_BLE_ADDRESS = "98:4F:EE:10:7F:E5";
 
@@ -376,8 +356,7 @@ public class MainActivity extends Activity {
                     isScanningMachine = false;
                     if(!machine.getControlBoard().getBLE().getConnectState()) {
                         isFindMachine = false;
-                        peripheralName.setText("No Device");
-                        peripheralAddress.setText("No Device");
+                        if(frag1Callback != null) frag1Callback.updatePeripheral("No Device","No Device");
                         displayConnectionState(R.string.stop_ble_scan);
                     }
                     invalidateOptionsMenu();
@@ -392,8 +371,7 @@ public class MainActivity extends Activity {
             isScanningMachine = false;
             if(!machine.getControlBoard().getBLE().getConnectState()) {
                 isFindMachine = false;
-                peripheralName.setText("No Device");
-                peripheralAddress.setText("No Device");
+                if(frag1Callback != null) frag1Callback.updatePeripheral("No Device","No Device");
                 displayConnectionState(R.string.stop_ble_scan);
             }
         }
@@ -418,8 +396,7 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this, String.valueOf(errorCode), Toast.LENGTH_SHORT).show();
             isScanningMachine = false;
             isFindMachine = false;
-            peripheralName.setText("No Device");
-            peripheralAddress.setText("No Device");
+            frag1Callback.updatePeripheral("No Device","No Device");
             displayConnectionState(R.string.fail_ble_scan);
             invalidateOptionsMenu();
         }
@@ -432,9 +409,8 @@ public class MainActivity extends Activity {
                         BLE ble = machine.getControlBoard().getBLE();
 
                         ble.setName(result.getDevice().getName());
-                        peripheralName.setText(ble.getName());
                         ble.setPeripheralAddress(result.getDevice().getAddress());
-                        peripheralAddress.setText(ble.getPeripheralAddress());
+                        frag1Callback.updatePeripheral(ble.getName(),ble.getPeripheralAddress());
                         displayConnectionState(R.string.success_ble_scan);
                         isFindMachine = true;
                         machine.commConnect();
@@ -478,15 +454,17 @@ public class MainActivity extends Activity {
                 int state = bundle.getInt("state");
                 float imu[] = bundle.getFloatArray("imu");
 
-                machine.setMachineState(state);
+                machine.setMotorState(state);
 
                 assert imu != null;
                 gyro.updateData(imu[0], imu[1], imu[2]);
                 accelerometer.updateData(imu[3], imu[4], imu[5]);
 
-                displayData(gyro.getData());
-                displayData(accelerometer.getData());
-                displayMotorState(machine.getMachineState());
+                resolver.insert(dataCode, state, imu);
+
+                frag1Callback.updateGyro(gyro.getData());
+                frag1Callback.updateAccelerometer(accelerometer.getData());
+                frag1Callback.updateMotorState(machine.getMotorState());
             }
         }
     };
@@ -497,6 +475,62 @@ public class MainActivity extends Activity {
                 machine.readMachineState();
             }
         }
+    }
+
+    private void makeCode() {
+        String oldCode = resolver.getLatestCode(getToday());
+        int codeLength = oldCode.length();
+        Calendar date = Calendar.getInstance();
+        dataCode = String.format(Locale.getDefault(),"%04d%02d%02d%02d", date.get(Calendar.YEAR), date.get(Calendar.MONTH)+1, date.get(Calendar.DATE), Integer.valueOf(oldCode.substring(codeLength-2,codeLength-1))+1);
+    }
+
+    public String getToday() {
+        Calendar today = Calendar.getInstance();
+
+        return String.format(Locale.getDefault(), "%04d-%02d-%02d", today.get(Calendar.YEAR),today.get(Calendar.MONTH)+1,today.get(Calendar.DATE));
+    }
+    public String getNow() {
+        Calendar now = Calendar.getInstance();
+
+        return String.format(Locale.getDefault(), "%02d:%02d:%02d", now.get(Calendar.HOUR),now.get(Calendar.MINUTE),now.get(Calendar.SECOND));
+    }
+    public String monthChange(String date, int amount) {
+        Calendar calendar = strToCalendar(date);
+
+        calendar.add(Calendar.MONTH, amount);
+
+        if (Calendar.getInstance().before(calendar)) {
+            Toast.makeText(getApplicationContext(), R.string.toast_date_error, Toast.LENGTH_SHORT).show();
+            return date;
+        }
+
+        return String.format(Locale.getDefault(),"%d-%02d-%02d",calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DATE));
+    }
+    public String dateChange(String date, int amount) {
+        Calendar calendar = strToCalendar(date);
+
+        calendar.add(Calendar.DATE,amount);
+
+        if (Calendar.getInstance().before(calendar)) {
+            Toast.makeText(getApplicationContext(), R.string.toast_date_error, Toast.LENGTH_SHORT).show();
+            return date;
+        }
+
+        return String.format(Locale.getDefault(),"%d-%02d-%02d",calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DATE));
+    }
+    public Calendar strToCalendar(String date) {
+        Calendar calendar = Calendar.getInstance();
+
+        String year = date.substring(0,4);
+        String month = date.substring(5,7);
+        String day = date.substring(8,10);
+
+        calendar.set(Integer.parseInt(year),Integer.parseInt(month)-1,Integer.parseInt(day));
+
+        return calendar;
+    }
+    public String calendarToStr(Calendar calendar) {
+        return String.format(Locale.getDefault(), "%04d-%02d-%02d", calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DATE));
     }
 }
 

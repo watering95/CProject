@@ -16,4 +16,6 @@
     <string name="stop_ble_scan">Scan stop</string>
     <string name="success_ble_scan">Scan complete</string>
     <string name="fail_ble_scan">Scan failed</string>
+    <string name="toast_htmlfile">HTML 파일 생성 실패</string>
+    <string name="toast_date_error">날짜 오류</string>
 </resources>
