@@ -2,33 +2,40 @@ package com.example.water.cproject;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+import com.example.water.cproject.DBHelper.CodeDBHelper;
+import com.example.water.cproject.DBHelper.MachineDBHelper;
 
 /**
  * Created by watering on 18. 3. 16.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class DBProvider extends ContentProvider {
     private static final String AUTHORITY = "watering.cproject.provider";
     private static final String PATH_MACHINE = "machine";
+    private static final String PATH_CODE = "code";
     private static final int CODE_MACHINE = 0;
+    private static final int CODE_CODE = 1;
 
-    private DBHelper dbHelper;
+    private MachineDBHelper machineDBHelper;
+    private CodeDBHelper codeDBHelper;
 
     private static final UriMatcher Matcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         Matcher.addURI(AUTHORITY,PATH_MACHINE,CODE_MACHINE);
+        Matcher.addURI(AUTHORITY,PATH_CODE,CODE_CODE);
     }
 
     @Override
     public boolean onCreate() {
-        dbHelper = new DBHelper(getContext());
+        machineDBHelper = new MachineDBHelper(getContext());
+        codeDBHelper = new CodeDBHelper(getContext());
         return true;
     }
     @Nullable
@@ -37,6 +44,8 @@ public class DBProvider extends ContentProvider {
         switch (Matcher.match(uri)) {
             case CODE_MACHINE:
                 return "vnd.android.cursor.dir/vnd.cproject.machine";
+            case CODE_CODE:
+                return "vnd.android.cursor.dir/vnd.cproject.code";
             default:
                 return null;
         }
@@ -47,7 +56,10 @@ public class DBProvider extends ContentProvider {
 
         switch (Matcher.match(uri)) {
             case CODE_MACHINE:
-                dbHelper.update(values, selection, selectionArgs);
+                machineDBHelper.update(values, selection, selectionArgs);
+                break;
+            case CODE_CODE:
+                codeDBHelper.update(values, selection, selectionArgs);
                 break;
             default:
         }
@@ -58,7 +70,10 @@ public class DBProvider extends ContentProvider {
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
         switch (Matcher.match(uri)) {
             case CODE_MACHINE:
-                dbHelper.insert(values);
+                machineDBHelper.insert(values);
+                break;
+            case CODE_CODE:
+                codeDBHelper.insert(values);
                 break;
             default:
                 return null;
@@ -72,7 +87,10 @@ public class DBProvider extends ContentProvider {
 
         switch (Matcher.match(uri)) {
             case CODE_MACHINE:
-                cursor = dbHelper.query(projection, selection, selectionArgs, sortOrder);
+                cursor = machineDBHelper.query(projection, selection, selectionArgs, sortOrder);
+                break;
+            case CODE_CODE:
+                cursor = codeDBHelper.query(projection, selection, selectionArgs, sortOrder);
                 break;
             default:
                 return null;
@@ -86,7 +104,10 @@ public class DBProvider extends ContentProvider {
 
         switch (Matcher.match(uri)) {
             case CODE_MACHINE:
-                dbHelper.delete(selection, selectionArgs);
+                machineDBHelper.delete(selection, selectionArgs);
+                break;
+            case CODE_CODE:
+                codeDBHelper.delete(selection, selectionArgs);
                 break;
             default:
         }

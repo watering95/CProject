@@ -1,4 +1,4 @@
-package com.example.water.cproject;
+package com.example.water.cproject.BLE;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Intent;
@@ -11,16 +11,16 @@ import java.util.HashMap;
  */
 
 @SuppressWarnings("DefaultFileTemplate")
-class gattAttributes {
+public class gattAttributes {
     private static final String UUID_MACHINE_SERVICE = "0000bbb0-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MACHINE_STATE = "0000bbb1-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_MACHINE_STATE = "0000bbb1-0000-1000-8000-00805f9b34fb";
 
     private static final String UUID_MOTOR_SERVICE = "00000174-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_DIRECTION = "00000175-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_LEFT_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
-    static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_MOTOR_DIRECTION = "00000175-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_MOTOR_LEFT_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
 
-    final static String MACHINE_STATE =
+    public final static String MACHINE_STATE =
             "com.example.bluetooth.le.ACTION";
     private final static String MOTOR_DIRECTION =
             "com.example.bluetooth.le.MOTOR_DIRECTION";

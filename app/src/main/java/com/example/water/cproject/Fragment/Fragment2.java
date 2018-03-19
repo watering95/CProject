@@ -1,9 +1,9 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Fragment;
 
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +14,12 @@ import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.example.water.cproject.DBResolver;
+import com.example.water.cproject.Machine.Info_Machine;
+import com.example.water.cproject.ListCodeAdapter;
+import com.example.water.cproject.MainActivity;
+import com.example.water.cproject.R;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -30,10 +36,9 @@ public class Fragment2 extends Fragment {
 
     private View mView;
     private MainActivity mainActivity;
-    private WebView mWeb;
     private static final String TAG = "InvestRecord";
     private DBResolver resolver;
-    ArrayList<String> listsCode;
+    private ArrayList<String> listsCode;
 
     public Fragment2() {
     }
@@ -68,16 +73,18 @@ public class Fragment2 extends Fragment {
         ListCodeAdapter listAdapter = new ListCodeAdapter(mView.getContext(), listsCode);
         if(listsCode.size() != 0) {
             listView.setAdapter(listAdapter);
+            makeHTMLFile(listsCode.get(0));
         }
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                makeHTMLFile(listsCode.get(position).toString());
+                makeHTMLFile(listsCode.get(position));
             }
         });
     }
     private void openWebView() {
-        mWeb = mView.findViewById(R.id.webView_frag2);
+        WebView mWeb = mView.findViewById(R.id.webView_frag2);
         mWeb.setWebViewClient(new WebViewClient());
         WebSettings set = mWeb.getSettings();
         set.setJavaScriptEnabled(true);
@@ -86,14 +93,17 @@ public class Fragment2 extends Fragment {
     }
     private void makeHTMLFile(String code) {
         try{
-            BufferedWriter bw = new BufferedWriter(new FileWriter(mainActivity.getFilesDir() + "graph_total.html",false));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(mainActivity.getFilesDir() + "graph.html",false));
             StringBuilder data = new StringBuilder();
 
-            List<Info_Machine>listInfoMachine = resolver.getInfoMachine(code);
-            int index = 0, limit = listInfoMachine.size();
+            List<Info_Machine> listInfoMachine = resolver.getInfoMachine(code);
+
+            int index = 0, limit = 0;
+            if(listInfoMachine != null) limit = listInfoMachine.size();
             do {
                 // 특정일의 합계와 평가액 계산
-                float[] imu = listInfoMachine.get(index).getImu();
+                float[] imu = new float[6];
+                if(listInfoMachine != null) imu = listInfoMachine.get(index).getImu();
                 data.append("[").append(", ")
                         .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2])).append(", ")
                         .append(String.valueOf(imu[3])).append(", ").append(String.valueOf(imu[4])).append(", ").append(String.valueOf(imu[5]))

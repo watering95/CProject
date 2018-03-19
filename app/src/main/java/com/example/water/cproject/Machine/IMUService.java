@@ -1,4 +1,4 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Machine;
 
 import android.app.Service;
 
@@ -12,12 +12,14 @@ import android.os.IBinder;
 import android.util.ArrayMap;
 import android.util.Log;
 
+import com.example.water.cproject.BLE.gattAttributes;
+
 import java.nio.ByteBuffer;
 
 import java.util.Map;
 
 import static android.content.ContentValues.TAG;
-import static com.example.water.cproject.BLEService.ACTION_DATA_AVAILABLE;
+import static com.example.water.cproject.BLE.BLEService.ACTION_DATA_AVAILABLE;
 
 /**
  * Created by watering on 18. 3. 13.
@@ -26,8 +28,8 @@ import static com.example.water.cproject.BLEService.ACTION_DATA_AVAILABLE;
 @SuppressWarnings("DefaultFileTemplate")
 public class IMUService extends Service {
 
-    final static String ACTION = "ACTION_DATA_TRANSFER";
-    final static String DATA = "IMU_DATA";
+    public final static String ACTION = "ACTION_DATA_TRANSFER";
+    public final static String DATA = "IMU_DATA";
 
     public IMUService() {
     }
@@ -111,8 +113,8 @@ public class IMUService extends Service {
         }
     };
 
-    class LocalBinder extends Binder {
-        IMUService getService() {
+    public class LocalBinder extends Binder {
+        public IMUService getService() {
             return IMUService.this;
         }
     }

@@ -3,9 +3,11 @@ package com.example.water.cproject;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.icu.text.IDNA;
 import android.net.Uri;
 import android.util.Log;
+
+import com.example.water.cproject.Machine.Info_Code;
+import com.example.water.cproject.Machine.Info_Machine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,15 +16,18 @@ import java.util.List;
  * Created by watering on 18. 3. 16.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class DBResolver{
     private ContentResolver cr;
     private static final int CODE_MACHINE = 0;
+    private static final int CODE_CODE = 1;
     private static final String URI_MACHINE = "content://watering.cproject.provider/machine";
+    private static final String URI_CODE = "content://watering.cproject.provider/code";
     private static final String TAG = "CProject";
-    private List<Info_Machine> lists = new ArrayList<>();
+    private final List<Info_Machine> listsInfoMachine = new ArrayList<>();
+    private final List<Info_Code> listsCode = new ArrayList<>();
 
-    private MainActivity mainActivity;
-
+    private final MainActivity mainActivity;
 
     public DBResolver(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
@@ -32,11 +37,10 @@ public class DBResolver{
         this.cr = cr;
     }
 
-    void insert(String code, int state, float[] imu) {
+    void insertMachine(int code, int state, float[] imu) {
         ContentValues cv = new ContentValues();
 
         cv.put("code",code);
-        cv.put("date",mainActivity.getToday());
         cv.put("time", mainActivity.getNow());
         cv.put("state",state);
         cv.put("gx",imu[0]);
@@ -49,7 +53,19 @@ public class DBResolver{
         try {
             cr.insert(Uri.parse(URI_MACHINE), cv);
         } catch (Exception e) {
-            Log.e(TAG,"DB 추가 error");
+            Log.e(TAG,"Machine DB insert error");
+        }
+    }
+    void insertCode(String code) {
+        ContentValues cv = new ContentValues();
+
+        cv.put("code",code);
+        cv.put("date", mainActivity.getToday());
+
+        try {
+            cr.insert(Uri.parse(URI_CODE), cv);
+        } catch (Exception e) {
+            Log.e(TAG,"Code DB insert error");
         }
     }
 
@@ -57,9 +73,9 @@ public class DBResolver{
         String selection = "date=?";
         String[] selectionArgs = new String[] {date};
 
-        getData(CODE_MACHINE, URI_MACHINE, selection, selectionArgs, "code DESC");
+        getData(CODE_CODE, URI_CODE, selection, selectionArgs, "code DESC");
 
-        if(lists.size() > 0) return lists.get(0).getCode();
+        if(listsInfoMachine.size() > 0) return listsCode.get(0).getCode();
         else return "0000000000";
     }
     public ArrayList<String> getCodes(String date) {
@@ -68,33 +84,44 @@ public class DBResolver{
         String selection = "date=?";
         String[] selectionArgs = new String[] {date};
 
-        getData(CODE_MACHINE, URI_MACHINE, selection, selectionArgs, "code DESC");
-        if(lists.size() > 0) {
-            for(int i = 0, size = lists.size(); i < size; i++) {
-                codes.add(lists.get(i).getCode());
+        getData(CODE_CODE, URI_CODE, selection, selectionArgs, "code DESC");
+        if(listsCode.size() > 0) {
+            for(int i = 0, size = listsCode.size(); i < size; i++) {
+                codes.add(listsCode.get(i).getCode());
             }
             return codes;
         }
         else return null;
     }
     public List<Info_Machine> getInfoMachine(String code) {
-        String selection = "code=?";
-        String[] selectionArgs = new String[] {code};
+        String selection = "id_code=?";
+        String[] selectionArgs = new String[] {String.valueOf(getCodeId(code))};
 
         getData(CODE_MACHINE, URI_MACHINE, selection, selectionArgs, null);
-        if(lists.size() > 0) {
-            return lists;
+        if(listsInfoMachine.size() > 0) {
+            return listsInfoMachine;
         }
         else return null;
     }
+    public int getCodeId(String code) {
+        String selection = "code=?";
+        String[] selectionArgs = new String[] {code};
 
+        getData(CODE_CODE, URI_CODE, selection, selectionArgs, null);
+        if(listsCode.size() > 0) {
+            return listsCode.get(0).getId();
+        }
+        else return -1;
+    }
 
     private void getData(int code, String uri, String selection, String[] selectionArgs, String sortOrder) {
         Cursor cursor;
-        Info_Machine info = new Info_Machine();
+        Info_Machine infoMachine = new Info_Machine();
+        Info_Code infoCode = new Info_Code();
         float[] imu = new float[6];
 
-        lists.clear();
+        listsInfoMachine.clear();
+        listsCode.clear();
 
         cursor = cr.query(Uri.parse(uri),null, selection, selectionArgs, sortOrder);
 
@@ -108,15 +135,21 @@ public class DBResolver{
         while(cursor.moveToNext()) {
             switch (code) {
                 case CODE_MACHINE:
-                    info.setCode(cursor.getString(0));
-                    info.setDate(cursor.getString(1));
-                    info.setTime(cursor.getString(2));
+                    infoMachine.setCode(cursor.getInt(1));
+                    infoMachine.setTime(cursor.getString(2));
 
                     for(int i = 0; i < 6; i++) {
                         imu[i] = cursor.getFloat(i + 3);
                     }
-                    info.setImu(imu);
-                    lists.add(info);
+                    infoMachine.setImu(imu);
+                    listsInfoMachine.add(infoMachine);
+                    break;
+                case CODE_CODE:
+                    infoCode.setId(cursor.getInt(0));
+                    infoCode.setCode(cursor.getString(1));
+                    infoCode.setDate(cursor.getString(2));
+
+                    listsCode .add(infoCode);
                     break;
                 default:
                     break;

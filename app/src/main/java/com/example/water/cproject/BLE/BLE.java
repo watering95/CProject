@@ -1,4 +1,4 @@
-package com.example.water.cproject;
+package com.example.water.cproject.BLE;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
@@ -29,45 +29,45 @@ public class BLE {
     private BLEService BLEService = new BLEService();
     private BluetoothGattCharacteristic characteristicNotify;
 
-    BLE() {
+    public BLE() {
 
     }
 
-    void setPeripheralAddress(String str) {
+    public void setPeripheralAddress(String str) {
         this.peripheralAddress = str;
     }
-    String getPeripheralAddress() {
+    public String getPeripheralAddress() {
         return this.peripheralAddress;
     }
-    boolean getConnectState() {
+    public boolean getConnectState() {
         return isConnected;
     }
-    void setConnectState(boolean isConnected) {
+    public void setConnectState(boolean isConnected) {
         this.isConnected = isConnected;
     }
 
-    void connect() {
+    public void connect() {
         if (BLEService != null) {
             final boolean result = BLEService.connect(peripheralAddress);
             Log.d(TAG, "Connect request result=" + result);
         }
     }
-    void disconnect() {
+    public void disconnect() {
         BLEService.disconnect();
     }
-    void close() {
+    public void close() {
         BLEService.close();
     }
 
-    void bindService(Context context) {
+    public void bindService(Context context) {
         Intent gattServiceIntent = new Intent(context, BLEService.class);
         context.bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
-    void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, int data) {
         sleep(10);
         BLEService.writeCharacteristic(characteristic, data);
     }
-    void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if(characteristic != null) {
             final int charaProp = characteristic.getProperties();
 
@@ -85,10 +85,10 @@ public class BLE {
         }
     }
 
-    List<BluetoothGattService> getSupportedGattServices() {
+    public List<BluetoothGattService> getSupportedGattServices() {
         return BLEService.getSupportedGattServices();
     }
-    IntentFilter makeGattUpdateIntentFilter() {
+    public IntentFilter makeGattUpdateIntentFilter() {
         return BLEService.makeGattUpdateIntentFilter();
     }
 

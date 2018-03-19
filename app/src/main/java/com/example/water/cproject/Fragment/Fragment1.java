@@ -1,13 +1,18 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Fragment;
 
-
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.example.water.cproject.Genuino.Accelerometer;
+import com.example.water.cproject.Genuino.Gyroscope;
+import com.example.water.cproject.MainActivity;
+import com.example.water.cproject.R;
 
 import java.util.Locale;
 
@@ -84,7 +89,7 @@ public class Fragment1 extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment1, container, false);
 
         initLayout();

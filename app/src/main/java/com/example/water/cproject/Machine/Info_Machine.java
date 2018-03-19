@@ -1,21 +1,18 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Machine;
 
 /**
  * Created by watering on 18. 3. 16.
  */
 
-class Info_Machine {
-    private String code;
-    private String date;
+@SuppressWarnings("DefaultFileTemplate")
+public class Info_Machine {
+    private int code;
     private String time;
     private int state;
     private float[] imu = new float[6];
 
-    public String getCode() {
+    public int getCode() {
         return code;
-    }
-    public String getDate() {
-        return date;
     }
     public String getTime() {
         return time;
@@ -27,11 +24,8 @@ class Info_Machine {
         return imu;
     }
 
-    public void setCode(String code) {
+    public void setCode(int code) {
         this.code = code;
-    }
-    public void setDate(String date) {
-        this.date = date;
     }
     public void setTime(String time) {
         this.time = time;

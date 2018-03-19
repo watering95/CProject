@@ -26,8 +26,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".BLEService" />
-        <service android:name=".IMUService" />
+        <service android:name=".BLE.BLEService" />
+        <service android:name=".Machine.IMUService" />
+
+        <provider
+            android:name=".DBProvider"
+            android:authorities="watering.cproject.provider"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
     </application>
 
 </manifest>

@@ -27,6 +27,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.water.cproject.BLE.BLE;
+import com.example.water.cproject.BLE.BLEService;
+import com.example.water.cproject.Fragment.Fragment1;
+import com.example.water.cproject.Fragment.Fragment2;
+import com.example.water.cproject.Genuino.Accelerometer;
+import com.example.water.cproject.Genuino.Gyroscope;
+import com.example.water.cproject.Machine.IMUService;
+import com.example.water.cproject.Machine.Machine;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -39,11 +48,10 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner BLEScanner;
     private String dataCode;
-    private boolean dataRecord;
 
     public final DBResolver resolver = new DBResolver(this);
 
-    Machine machine;
+    public Machine machine;
     private final ScheduledJob scheduledJob = new ScheduledJob();
     private final Timer jobScheduler = new Timer();
 
@@ -66,14 +74,14 @@ public class MainActivity extends AppCompatActivity {
     private Frag1Callback frag1Callback;
     private Frag2Callback frag2Callback;
 
-    interface Frag1Callback {
+    public interface Frag1Callback {
         void updateMachineState(int resourceId);
         void updateMotorState(int state);
         void updateGyro(Gyroscope gyro);
         void updateAccelerometer(Accelerometer accelerometer);
         void updatePeripheral(String name, String address);
     }
-    interface Frag2Callback {
+    public interface Frag2Callback {
 
     }
 
@@ -194,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId()) {
             case R.id.buttonRun:
                 machine.transferMovingOperation(machine.MOTOR_FORWARD);
-                dataRecord = true;
+                boolean dataRecord = true;
                 makeCode();
                 break;
             case R.id.buttonStop:
@@ -460,7 +468,9 @@ public class MainActivity extends AppCompatActivity {
                 gyro.updateData(imu[0], imu[1], imu[2]);
                 accelerometer.updateData(imu[3], imu[4], imu[5]);
 
-                resolver.insert(dataCode, state, imu);
+                if(dataCode != null) {
+                    resolver.insertMachine(resolver.getCodeId(dataCode), state, imu);
+                }
 
                 frag1Callback.updateGyro(gyro.getData());
                 frag1Callback.updateAccelerometer(accelerometer.getData());
@@ -479,9 +489,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void makeCode() {
         String oldCode = resolver.getLatestCode(getToday());
-        int codeLength = oldCode.length();
+        int code = 0;
+
+        if(oldCode != null) {
+            int codeLength = oldCode.length();
+            code = Integer.valueOf(oldCode.substring(codeLength-2,codeLength-1)) + 1;
+        }
+
         Calendar date = Calendar.getInstance();
-        dataCode = String.format(Locale.getDefault(),"%04d%02d%02d%02d", date.get(Calendar.YEAR), date.get(Calendar.MONTH)+1, date.get(Calendar.DATE), Integer.valueOf(oldCode.substring(codeLength-2,codeLength-1))+1);
+        dataCode = String.format(Locale.getDefault(),"%04d%02d%02d%02d", date.get(Calendar.YEAR), date.get(Calendar.MONTH)+1, date.get(Calendar.DATE), code);
+        resolver.insertCode(dataCode);
     }
 
     public String getToday() {
@@ -518,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
 
         return String.format(Locale.getDefault(),"%d-%02d-%02d",calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DATE));
     }
-    public Calendar strToCalendar(String date) {
+    private Calendar strToCalendar(String date) {
         Calendar calendar = Calendar.getInstance();
 
         String year = date.substring(0,4);

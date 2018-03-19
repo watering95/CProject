@@ -1,4 +1,4 @@
-package com.example.water.cproject;
+package com.example.water.cproject.DBHelper;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,14 +12,15 @@ import android.provider.BaseColumns;
  * Created by watering on 18. 3. 16.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final int db_version = 1;
     private static final String DB_FILE_NAME = "Machine.db";
-    String TABLE_NAME = "tbl_machine";
-    String[] COLUMNS = new String[] {"code","date","time","state","gx","gy","gz","ax","ay","az"};
+    String TABLE_NAME;
+    String[] COLUMNS;
 
-    public DBHelper(Context context) {
+    DBHelper(Context context) {
         super(context, DB_FILE_NAME, null, db_version);
     }
 
@@ -27,7 +28,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         StringBuilder sql;
 
-        sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (");
+        sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " ("
+                + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT ");
 
         for (String COLUMN : COLUMNS) {
             sql.append(", ").append(COLUMN);
@@ -42,7 +44,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         StringBuilder sql;
 
-        sql = new StringBuilder("CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME).append(" (");
+        sql = new StringBuilder("CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME).append(" (")
+                .append(BaseColumns._ID).append(" INTEGER PRIMARY KEY AUTOINCREMENT");
 
         for (String COLUMN : COLUMNS) {
             sql.append(", ").append(COLUMN);
@@ -57,10 +60,10 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    void insert(ContentValues values) throws SQLiteException {
+    public void insert(ContentValues values) throws SQLiteException {
         getWritableDatabase().insert(TABLE_NAME, null, values);
     }
-    void delete(String where, String[] whereArgs) throws SQLiteException {
+    public void delete(String where, String[] whereArgs) throws SQLiteException {
         String selection;
 
         if(where == null) {
@@ -71,10 +74,10 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         getWritableDatabase().delete(TABLE_NAME, selection, whereArgs);
     }
-    void update(ContentValues values, String where, String[] selectionArgs) throws SQLiteException {
+    public void update(ContentValues values, String where, String[] selectionArgs) throws SQLiteException {
         getWritableDatabase().update(TABLE_NAME, values, where + "=?", selectionArgs);
     }
-    Cursor query(String[] columns, String selection, String[] selectionArgs, String orderBy) throws SQLiteException {
+    public Cursor query(String[] columns, String selection, String[] selectionArgs, String orderBy) throws SQLiteException {
         return getReadableDatabase().query(TABLE_NAME, columns, selection, selectionArgs, null, null, orderBy);
     }
 }

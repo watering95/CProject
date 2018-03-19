@@ -1,10 +1,13 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Genuino;
 
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+
+import com.example.water.cproject.BLE.BLE;
+import com.example.water.cproject.Machine.IMUService;
 
 import static android.content.Context.BIND_AUTO_CREATE;
 
@@ -13,7 +16,7 @@ import static android.content.Context.BIND_AUTO_CREATE;
  */
 
 @SuppressWarnings("DefaultFileTemplate")
-class Genuino101 {
+public class Genuino101 {
     private final BLE ble = new BLE();
     private final Gyroscope gyroscope = new Gyroscope();
     private final Accelerometer accelerometer = new Accelerometer();
@@ -39,7 +42,7 @@ class Genuino101 {
     private final ServiceConnection serviceConnection = new ServiceConnection(){
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service){
-            com.example.water.cproject.IMUService IMUService = ((com.example.water.cproject.IMUService.LocalBinder) service).getService();
+            IMUService IMUService = ((com.example.water.cproject.Machine.IMUService.LocalBinder) service).getService();
             IMUService.initialize();
         }
 

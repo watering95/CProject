@@ -51,3 +51,4 @@ local.properties
 # Windows Installer files
 # Windows shortcuts
 # End of https://www.gitignore.io/api/windows,androidstudio
+!/local.properties

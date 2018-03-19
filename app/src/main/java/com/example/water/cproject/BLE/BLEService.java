@@ -1,4 +1,4 @@
-package com.example.water.cproject;
+package com.example.water.cproject.BLE;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;

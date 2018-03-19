@@ -1,14 +1,14 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Genuino;
 
 /**
  * Created by water on 2017-04-18.
  */
 
 @SuppressWarnings("DefaultFileTemplate")
-public class Accelerometer {
+public class Gyroscope {
     private float x, y, z;
 
-    public Accelerometer() {
+    public Gyroscope() {
         updateData(0,0,0);
     }
 
@@ -17,8 +17,7 @@ public class Accelerometer {
         this.y = y;
         this.z = z;
     }
-
-    public Accelerometer getData() {
+    public Gyroscope getData() {
         return this;
     }
     public float getX() {

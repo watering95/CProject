@@ -14,6 +14,7 @@ import java.util.List;
  * Created by watering on 18. 3. 17.
  */
 
+@SuppressWarnings("DefaultFileTemplate")
 public class ListCodeAdapter extends BaseAdapter {
     private final List<String> list;
     private final LayoutInflater inflater;
@@ -45,7 +46,7 @@ public class ListCodeAdapter extends BaseAdapter {
         }
 
         TextView code = convertView.findViewById(R.id.textView_layout_list);
-        code.setText(list.get(position).toString());
+        if(!list.isEmpty()) code.setText(list.get(position));
         return convertView;
     }
 }

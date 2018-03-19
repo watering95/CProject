@@ -1,25 +1,27 @@
-package com.example.water.cproject;
+package com.example.water.cproject.Machine;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.IntentFilter;
 
-import java.util.List;
+import com.example.water.cproject.BLE.BLE;
+import com.example.water.cproject.BLE.gattAttributes;
+import com.example.water.cproject.Genuino.Genuino101;
 
-import static com.example.water.cproject.IMUService.ACTION;
+import java.util.List;
 
 /**
  * Created by water on 2017-04-19.
  */
 
 @SuppressWarnings("DefaultFileTemplate")
-class Machine {
-    final int MOTOR_FORWARD = 1;
-    final int MOTOR_BACKWARD = 4;
-    final int MOTOR_LEFT = 3;
-    final int MOTOR_RIGHT = 2;
-    final int MOTOR_STOP = 0;
+public class Machine {
+    public final int MOTOR_FORWARD = 1;
+    public final int MOTOR_BACKWARD = 4;
+    public final int MOTOR_LEFT = 3;
+    public final int MOTOR_RIGHT = 2;
+    public final int MOTOR_STOP = 0;
 
     private final Genuino101 genuino = new Genuino101();
     private final BLE ble = genuino.getBLE();
@@ -32,34 +34,34 @@ class Machine {
     private int speedMain = 0, speedOffsetLeft, speedOffsetRight;
     private int motorState;
 
-    Machine() {
+    public Machine() {
 
     }
 
-    Genuino101 getControlBoard() {
+    public Genuino101 getControlBoard() {
         return this.genuino;
     }
-    int getRunSpeed() {
+    public int getRunSpeed() {
         return this.speedMain;
     }
-    int getMotorState() {
+    public int getMotorState() {
         return this.motorState;
     }
 
-    void setRunSpeed(int speed) {
+    public void setRunSpeed(int speed) {
         this.speedMain = speed;
     }
-    void setSpeedOffsetLeft(int speed) {
+    public void setSpeedOffsetLeft(int speed) {
         this.speedOffsetLeft = speed;
     }
-    void setSpeedOffsetRight(int speed) {
+    public void setSpeedOffsetRight(int speed) {
         this.speedOffsetRight = speed;
     }
-    void setMotorState(int state) {
+    public void setMotorState(int state) {
         this.motorState = state;
     }
 
-    void transferMovingOperation(int direction) {
+    public void transferMovingOperation(int direction) {
         int speedLeft = speedMain + speedOffsetLeft;
         int speedRight = speedMain + speedOffsetRight;
 
@@ -67,29 +69,29 @@ class Machine {
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
         if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, direction);
     }
-    void commConnect() {
+    public void commConnect() {
         ble.connect();
     }
-    void commDisconnect() {
+    public void commDisconnect() {
         ble.disconnect();
     }
-    void commClose() {
+    public void commClose() {
         ble.close();
     }
-    void bindService(Context context) {
+    public void bindService(Context context) {
         ble.bindService(context);
         genuino.bindService(context);
     }
-    void getGattServices() {
+    public void getGattServices() {
         getGattServices(ble.getSupportedGattServices());
     }
 
-    void readMachineState() {
+    public void readMachineState() {
         ble.readCharacteristic(mCharacteristicMachineState);
     }
-    IntentFilter makeGattUpdateIntentFilter() {
+    public IntentFilter makeGattUpdateIntentFilter() {
         IntentFilter intentFilter = ble.makeGattUpdateIntentFilter();
-        intentFilter.addAction(ACTION);
+        intentFilter.addAction(IMUService.ACTION);
         return intentFilter;
     }
 
