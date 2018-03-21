@@ -6,8 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.example.water.cproject.Machine.Info_Code;
-import com.example.water.cproject.Machine.Info_Machine;
+import com.example.water.cproject.Machine.InfoCode;
+import com.example.water.cproject.Machine.InfoMachine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +24,8 @@ public class DBResolver{
     private static final String URI_MACHINE = "content://watering.cproject.provider/machine";
     private static final String URI_CODE = "content://watering.cproject.provider/code";
     private static final String TAG = "CProject";
-    private final List<Info_Machine> listsInfoMachine = new ArrayList<>();
-    private final List<Info_Code> listsCode = new ArrayList<>();
+    private final List<InfoMachine> listsInfoMachine = new ArrayList<>();
+    private final List<InfoCode> listsCode = new ArrayList<>();
 
     private final MainActivity mainActivity;
 
@@ -40,7 +40,7 @@ public class DBResolver{
     void insertMachine(int code, int state, float[] imu) {
         ContentValues cv = new ContentValues();
 
-        cv.put("code",code);
+        cv.put("id_code",code);
         cv.put("time", mainActivity.getNow());
         cv.put("state",state);
         cv.put("gx",imu[0]);
@@ -75,7 +75,7 @@ public class DBResolver{
 
         getData(CODE_CODE, URI_CODE, selection, selectionArgs, "code DESC");
 
-        if(listsInfoMachine.size() > 0) return listsCode.get(0).getCode();
+        if(listsCode.size() > 0) return listsCode.get(0).getCode();
         else return "0000000000";
     }
     public ArrayList<String> getCodes(String date) {
@@ -93,11 +93,11 @@ public class DBResolver{
         }
         else return null;
     }
-    public List<Info_Machine> getInfoMachine(String code) {
+    public List<InfoMachine> getInfoMachine(String code) {
         String selection = "id_code=?";
         String[] selectionArgs = new String[] {String.valueOf(getCodeId(code))};
 
-        getData(CODE_MACHINE, URI_MACHINE, selection, selectionArgs, null);
+        getData(CODE_MACHINE, URI_MACHINE, selection, selectionArgs, "time DESC");
         if(listsInfoMachine.size() > 0) {
             return listsInfoMachine;
         }
@@ -113,15 +113,45 @@ public class DBResolver{
         }
         else return -1;
     }
+    public InfoCode getCode(int id) {
+        String selection = "_id=?";
+        String[] selectionArgs = new String[] {String.valueOf(id)};
+
+        getData(CODE_CODE, URI_CODE, selection, selectionArgs, null);
+        if(listsCode.size() > 0) {
+            return listsCode.get(0);
+        }
+        else return null;
+    }
+
+    public void deleteCode(String code) {
+        String selection = "code";
+        String selectionArg[] = new String[] {code};
+
+        cr.delete(Uri.parse(URI_CODE), selection, selectionArg);
+    }
+    public void deleteInfoMachine(String code) {
+        int id = getCodeId(code);
+        String selection = "id_code";
+        String selectionArg[] = new String[] {String.valueOf(id)};
+
+        cr.delete(Uri.parse(URI_MACHINE), selection, selectionArg);
+    }
 
     private void getData(int code, String uri, String selection, String[] selectionArgs, String sortOrder) {
         Cursor cursor;
-        Info_Machine infoMachine = new Info_Machine();
-        Info_Code infoCode = new Info_Code();
-        float[] imu = new float[6];
+        InfoMachine infoMachine;
+        InfoCode infoCode;
+        float[] imu;
 
-        listsInfoMachine.clear();
-        listsCode.clear();
+        switch (code) {
+            case CODE_MACHINE:
+                listsInfoMachine.clear();
+                break;
+            case CODE_CODE:
+                listsCode.clear();
+                break;
+        }
 
         cursor = cr.query(Uri.parse(uri),null, selection, selectionArgs, sortOrder);
 
@@ -135,21 +165,25 @@ public class DBResolver{
         while(cursor.moveToNext()) {
             switch (code) {
                 case CODE_MACHINE:
+                    infoMachine = new InfoMachine();
+                    imu = new float[6];
                     infoMachine.setCode(cursor.getInt(1));
                     infoMachine.setTime(cursor.getString(2));
+                    infoMachine.setState(cursor.getInt(3));
 
                     for(int i = 0; i < 6; i++) {
-                        imu[i] = cursor.getFloat(i + 3);
+                        imu[i] = cursor.getFloat(i + 4);
                     }
                     infoMachine.setImu(imu);
                     listsInfoMachine.add(infoMachine);
                     break;
                 case CODE_CODE:
+                    infoCode = new InfoCode();
                     infoCode.setId(cursor.getInt(0));
                     infoCode.setCode(cursor.getString(1));
                     infoCode.setDate(cursor.getString(2));
 
-                    listsCode .add(infoCode);
+                    listsCode.add(infoCode);
                     break;
                 default:
                     break;

@@ -493,7 +493,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(oldCode != null) {
             int codeLength = oldCode.length();
-            code = Integer.valueOf(oldCode.substring(codeLength-2,codeLength-1)) + 1;
+            code = Integer.valueOf(oldCode.substring(codeLength-2,codeLength)) + 1;
         }
 
         Calendar date = Calendar.getInstance();

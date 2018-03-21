@@ -16,7 +16,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.water.cproject.DBResolver;
-import com.example.water.cproject.Machine.Info_Machine;
+import com.example.water.cproject.Machine.InfoCode;
+import com.example.water.cproject.Machine.InfoMachine;
 import com.example.water.cproject.ListCodeAdapter;
 import com.example.water.cproject.MainActivity;
 import com.example.water.cproject.R;
@@ -35,10 +36,12 @@ import java.util.List;
 public class Fragment2 extends Fragment {
 
     private View mView;
+    private WebView mWeb;
     private MainActivity mainActivity;
-    private static final String TAG = "InvestRecord";
+    private static final String TAG = "CProject";
     private DBResolver resolver;
     private ArrayList<String> listsCode;
+    private ListCodeAdapter listAdapter;
 
     public Fragment2() {
     }
@@ -69,9 +72,9 @@ public class Fragment2 extends Fragment {
 
     private void initLayout() {
         listsCode = resolver.getCodes(mainActivity.getToday());
-        ListView listView = mView.findViewById(R.id.listView_frag2);
-        ListCodeAdapter listAdapter = new ListCodeAdapter(mView.getContext(), listsCode);
-        if(listsCode.size() != 0) {
+        final ListView listView = mView.findViewById(R.id.listView_frag2);
+        listAdapter = new ListCodeAdapter(mView.getContext(), listsCode);
+        if(listsCode != null) {
             listView.setAdapter(listAdapter);
             makeHTMLFile(listsCode.get(0));
         }
@@ -80,11 +83,32 @@ public class Fragment2 extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 makeHTMLFile(listsCode.get(position));
+                mWeb.reload();
+
+            }
+        });
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                String code = listsCode.get(position);
+                resolver.deleteInfoMachine(code);
+                resolver.deleteCode(code);
+                updateView();
+
+                return true;
             }
         });
     }
+    private void updateView() {
+        int time = 0;
+
+        listsCode.clear();
+        listsCode = resolver.getCodes(mainActivity.getToday());
+
+        listAdapter.notifyDataSetChanged();
+    }
     private void openWebView() {
-        WebView mWeb = mView.findViewById(R.id.webView_frag2);
+        mWeb = mView.findViewById(R.id.webView_frag2);
         mWeb.setWebViewClient(new WebViewClient());
         WebSettings set = mWeb.getSettings();
         set.setJavaScriptEnabled(true);
@@ -95,60 +119,64 @@ public class Fragment2 extends Fragment {
         try{
             BufferedWriter bw = new BufferedWriter(new FileWriter(mainActivity.getFilesDir() + "graph.html",false));
             StringBuilder data = new StringBuilder();
+            StringBuffer date = new StringBuffer();
+            InfoMachine infoMachine;
+            InfoCode infoCode;
+            float[] imu = new float[6];
 
-            List<Info_Machine> listInfoMachine = resolver.getInfoMachine(code);
+            List<InfoMachine> listInfoMachine = resolver.getInfoMachine(code);
 
             int index = 0, limit = 0;
             if(listInfoMachine != null) limit = listInfoMachine.size();
             do {
-                // 특정일의 합계와 평가액 계산
-                float[] imu = new float[6];
-                if(listInfoMachine != null) imu = listInfoMachine.get(index).getImu();
-                data.append("[").append(", ")
-                        .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2])).append(", ")
-                        .append(String.valueOf(imu[3])).append(", ").append(String.valueOf(imu[4])).append(", ").append(String.valueOf(imu[5]))
-                        .append("],\n");
-                // 초기화
+                if(listInfoMachine != null) {
+                    infoMachine = listInfoMachine.get(index);
+                    imu = infoMachine.getImu();
+                    infoCode = resolver.getCode(infoMachine.getCode());
+                    date = new StringBuffer();
+                    date.append(infoCode.getDate()).append("T").append(infoMachine.getTime()).append("-0800");
+                }
+                 data.append("[").append("new Date('").append(date).append("'), ")
+                    .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2])).append(", ")
+                    .append(String.valueOf(imu[3])).append(", ").append(String.valueOf(imu[4])).append(", ").append(String.valueOf(imu[5]))
+                    .append("],\n");
                 index++;
-                // 날짜 변경
             } while(index < limit);
 
             data.delete(data.length()-2,data.length()-1);
 
             Log.i(TAG, String.format("%s",data));
 
-            String function = "function drawChart() {\n"
-                    + "var chartDiv = document.getElementById('chart_div');\n\n"
+            StringBuilder function = new StringBuilder();
+            function.append("function drawChart() {\n")
+                .append("var chartDiv = document.getElementById('chart_div');\n\n")
+                .append("var data = new google.visualization.DataTable();\n")
+                .append("data.addColumn('datetime','Time');\n")
+                .append("data.addColumn('number','gx');\n")
+                .append("data.addColumn('number','gy');\n")
+                .append("data.addColumn('number','gz');\n")
+                .append("data.addColumn('number','ax');\n")
+                .append("data.addColumn('number','ay');\n")
+                .append("data.addColumn('number','az');\n")
+                .append("data.addRows([\n").append(data).append("]);\n\n")
+                .append("var options = {\n")
+                .append("chart: {title: 'IMU Data'}\n")
+                .append("};\n\n")
+                .append("var chart = new google.visualization.LineChart(chartDiv);\n")
+                .append("chart.draw(data, options);\n").append("}\n");
 
-                    + "var data = new google.visualization.DataTable();\n"
-                    + "data.addColumn('number','gx');\n"
-                    + "data.addColumn('number','gy');\n"
-                    + "data.addColumn('number','gz');\n"
-                    + "data.addColumn('number','ax');\n"
-                    + "data.addColumn('number','ay');\n"
-                    + "data.addColumn('number','az');\n"
-                    + "data.addRows([\n" + data + "]);\n\n"
+            StringBuilder script = new StringBuilder();
+            script.append("<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n")
+                .append("<script type=\"text/javascript\">\n")
+                .append("google.charts.load('current', {'packages':['line', 'corechart']});\n")
+                .append("google.charts.setOnLoadCallback(drawChart);\n")
+                .append(function)
+                .append("</script>\n");
 
-                    + "var options = {"
-                    + "};\n\n"
+            StringBuilder body = new StringBuilder();
+            body.append("<div id=\"chart_div\"></div>\n");
 
-                    + "var chart = new google.visualization.LineChart(chartDiv);\n"
-                    + "chart.draw(data, options);\n"
-
-                    + "}\n";
-
-            String script = "<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n"
-                    + "<script type=\"text/javascript\">\n"
-                    + "google.charts.load('current', {'packages':['line', 'corechart']});\n"
-                    + "google.charts.setOnLoadCallback(drawChart);\n"
-                    + function
-                    + "</script>\n";
-
-            String body = "<div id=\"chart_div\"></div>\n";
-
-            String html = "<!DOCTYPE html>\n" + "<head>\n" + script + "</head>\n" + "<body>\n" + body + "</body>\n" + "</html>";
-
-            bw.write(html);
+            bw.write("<!DOCTYPE html>\n" + "<head>\n" + script + "</head>\n" + "<body>\n" + body + "</body>\n" + "</html>");
             bw.close();
         } catch (IOException e) {
             Toast.makeText(mainActivity.getApplicationContext(), R.string.toast_htmlfile, Toast.LENGTH_SHORT).show();
