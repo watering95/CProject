@@ -18,4 +18,5 @@
     <string name="fail_ble_scan">Scan failed</string>
     <string name="toast_htmlfile">HTML 파일 생성 실패</string>
     <string name="toast_date_error">날짜 오류</string>
+    <string name="delete_code">Code를 삭제하시겠습니까?</string>
 </resources>

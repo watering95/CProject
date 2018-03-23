@@ -1,4 +1,4 @@
-package com.example.water.cproject.Fragment;
+package com.example.water.cproject.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.water.cproject.Genuino.Accelerometer;
-import com.example.water.cproject.Genuino.Gyroscope;
+import com.example.water.cproject.genuino.Accelerometer;
+import com.example.water.cproject.genuino.Gyroscope;
 import com.example.water.cproject.MainActivity;
 import com.example.water.cproject.R;
 

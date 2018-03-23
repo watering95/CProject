@@ -27,14 +27,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.example.water.cproject.BLE.BLE;
-import com.example.water.cproject.BLE.BLEService;
-import com.example.water.cproject.Fragment.Fragment1;
-import com.example.water.cproject.Fragment.Fragment2;
-import com.example.water.cproject.Genuino.Accelerometer;
-import com.example.water.cproject.Genuino.Gyroscope;
-import com.example.water.cproject.Machine.IMUService;
-import com.example.water.cproject.Machine.Machine;
+import com.example.water.cproject.ble.BLE;
+import com.example.water.cproject.ble.BLEService;
+import com.example.water.cproject.fragment.Fragment1;
+import com.example.water.cproject.fragment.Fragment2;
+import com.example.water.cproject.genuino.Accelerometer;
+import com.example.water.cproject.genuino.Gyroscope;
+import com.example.water.cproject.machine.IMUService;
+import com.example.water.cproject.machine.Machine;
 
 import java.util.ArrayList;
 import java.util.Calendar;

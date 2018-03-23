@@ -1,18 +1,17 @@
-package com.example.water.cproject.Genuino
+package com.example.water.cproject.genuino
 
 /**
  * Created by water on 2017-04-18.
  */
 
-class Accelerometer {
+class Gyroscope {
     var x: Float = 0.toFloat()
         private set
     var y: Float = 0.toFloat()
         private set
     var z: Float = 0.toFloat()
         private set
-
-    val data: Accelerometer
+    val data: Gyroscope
         get() = this
 
     init {

@@ -1,13 +1,13 @@
-package com.example.water.cproject.Machine;
+package com.example.water.cproject.machine;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.content.IntentFilter;
 
-import com.example.water.cproject.BLE.BLE;
-import com.example.water.cproject.BLE.gattAttributes;
-import com.example.water.cproject.Genuino.Genuino101;
+import com.example.water.cproject.ble.BLE;
+import com.example.water.cproject.ble.gattAttributes;
+import com.example.water.cproject.genuino.Genuino101;
 
 import java.util.List;
 

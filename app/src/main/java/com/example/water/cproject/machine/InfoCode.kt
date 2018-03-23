@@ -1,4 +1,4 @@
-package com.example.water.cproject.Machine
+package com.example.water.cproject.machine
 
 /**
  * Created by watering on 18. 3. 16.

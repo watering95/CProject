@@ -1,4 +1,4 @@
-package com.example.water.cproject.Machine;
+package com.example.water.cproject.machine;
 
 import android.app.Service;
 
@@ -12,14 +12,14 @@ import android.os.IBinder;
 import android.util.ArrayMap;
 import android.util.Log;
 
-import com.example.water.cproject.BLE.gattAttributes;
+import com.example.water.cproject.ble.gattAttributes;
 
 import java.nio.ByteBuffer;
 
 import java.util.Map;
 
 import static android.content.ContentValues.TAG;
-import static com.example.water.cproject.BLE.BLEService.ACTION_DATA_AVAILABLE;
+import static com.example.water.cproject.ble.BLEService.ACTION_DATA_AVAILABLE;
 
 /**
  * Created by watering on 18. 3. 13.

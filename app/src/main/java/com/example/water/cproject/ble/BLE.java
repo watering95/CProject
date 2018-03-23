@@ -1,4 +1,4 @@
-package com.example.water.cproject.BLE;
+package com.example.water.cproject.ble;
 
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;

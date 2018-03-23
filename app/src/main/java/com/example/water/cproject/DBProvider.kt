@@ -6,8 +6,8 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
 
-import com.example.water.cproject.DBHelper.CodeDBHelper
-import com.example.water.cproject.DBHelper.MachineDBHelper
+import com.example.water.cproject.dbHelper.CodeDBHelper
+import com.example.water.cproject.dbHelper.MachineDBHelper
 
 /**
  * Created by watering on 18. 3. 16.
@@ -23,15 +23,13 @@ class DBProvider : ContentProvider() {
         codeDBHelper = CodeDBHelper(context!!)
         return true
     }
-
     override fun getType(uri: Uri): String? {
-        when (Matcher.match(uri)) {
-            CODE_MACHINE -> return "vnd.android.cursor.dir/vnd.cproject.machine"
-            CODE_CODE -> return "vnd.android.cursor.dir/vnd.cproject.code"
-            else -> return null
+        return when (Matcher.match(uri)) {
+            CODE_MACHINE -> "vnd.android.cursor.dir/vnd.cproject.machine"
+            CODE_CODE -> "vnd.android.cursor.dir/vnd.cproject.code"
+            else -> null
         }
     }
-
     override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int {
         val count = 0
 
@@ -41,7 +39,6 @@ class DBProvider : ContentProvider() {
         }
         return count
     }
-
     override fun insert(uri: Uri, values: ContentValues?): Uri? {
         when (Matcher.match(uri)) {
             CODE_MACHINE -> machineDBHelper!!.insert(values!!)
@@ -50,19 +47,15 @@ class DBProvider : ContentProvider() {
         }
         return uri
     }
-
     override fun query(uri: Uri, projection: Array<String>?, selection: String?, selectionArgs: Array<String>?, sortOrder: String?): Cursor? {
-        val cursor: Cursor
 
-        when (Matcher.match(uri)) {
-            CODE_MACHINE -> cursor = machineDBHelper!!.query(projection, selection!!, selectionArgs!!, sortOrder)
-            CODE_CODE -> cursor = codeDBHelper!!.query(projection, selection!!, selectionArgs!!, sortOrder)
+        return when (Matcher.match(uri)) {
+            CODE_MACHINE -> machineDBHelper!!.query(projection, selection!!, selectionArgs!!, sortOrder)
+            CODE_CODE -> codeDBHelper!!.query(projection, selection!!, selectionArgs!!, sortOrder)
             else -> return null
         }
-        return cursor
 
     }
-
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
         val count = 0
 
@@ -74,11 +67,11 @@ class DBProvider : ContentProvider() {
     }
 
     companion object {
-        private val AUTHORITY = "watering.cproject.provider"
-        private val PATH_MACHINE = "machine"
-        private val PATH_CODE = "code"
-        private val CODE_MACHINE = 0
-        private val CODE_CODE = 1
+        private const val AUTHORITY = "watering.cproject.provider"
+        private const val PATH_MACHINE = "machine"
+        private const val PATH_CODE = "code"
+        private const val CODE_MACHINE = 0
+        private const val CODE_CODE = 1
 
         private val Matcher = UriMatcher(UriMatcher.NO_MATCH)
 

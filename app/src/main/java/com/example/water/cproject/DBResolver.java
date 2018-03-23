@@ -6,8 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.example.water.cproject.Machine.InfoCode;
-import com.example.water.cproject.Machine.InfoMachine;
+import com.example.water.cproject.machine.InfoCode;
+import com.example.water.cproject.machine.InfoMachine;
 
 import java.util.ArrayList;
 import java.util.List;

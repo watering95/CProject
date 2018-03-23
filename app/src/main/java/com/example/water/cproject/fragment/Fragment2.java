@@ -1,4 +1,4 @@
-package com.example.water.cproject.Fragment;
+package com.example.water.cproject.fragment;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -16,8 +16,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.water.cproject.DBResolver;
-import com.example.water.cproject.Machine.InfoCode;
-import com.example.water.cproject.Machine.InfoMachine;
+import com.example.water.cproject.machine.InfoCode;
+import com.example.water.cproject.machine.InfoMachine;
 import com.example.water.cproject.ListCodeAdapter;
 import com.example.water.cproject.MainActivity;
 import com.example.water.cproject.R;
@@ -90,18 +90,19 @@ public class Fragment2 extends Fragment {
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                String code = listsCode.get(position);
-                resolver.deleteInfoMachine(code);
-                resolver.deleteCode(code);
-                updateView();
+                    UserDialogFragment dialog = UserDialogFragment.newInstance(position, new UserDialogFragment.UserListener() {
+                        @Override
+                        public void onWorkComplete() {
+                            updateView();
+                        }
+                    });
+                    dialog.show(getFragmentManager(), "dialog");
 
                 return true;
             }
         });
     }
     private void updateView() {
-        int time = 0;
-
         listsCode.clear();
         listsCode = resolver.getCodes(mainActivity.getToday());
 

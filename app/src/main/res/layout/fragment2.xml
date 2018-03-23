@@ -7,7 +7,6 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/webView_frag2"
         android:id="@+id/listView_frag2"/>
 
     <WebView

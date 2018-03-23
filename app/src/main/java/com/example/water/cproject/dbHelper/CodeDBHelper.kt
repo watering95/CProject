@@ -1,4 +1,4 @@
-package com.example.water.cproject.DBHelper
+package com.example.water.cproject.dbHelper
 
 import android.content.Context
 
@@ -8,7 +8,7 @@ import android.content.Context
 
 class CodeDBHelper(context: Context) : DBHelper(context) {
     init {
-        table_name = "tbl_code"
+        tableName = "tbl_code"
         columns = arrayOf("code TEXT UNIQUE", "date TEXT")
     }
 }

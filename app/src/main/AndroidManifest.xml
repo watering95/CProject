@@ -27,8 +27,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".BLE.BLEService" />
-        <service android:name=".Machine.IMUService" />
+        <service android:name=".ble.BLEService" />
+        <service android:name=".machine.IMUService" />
 
         <provider
             android:name=".DBProvider"
