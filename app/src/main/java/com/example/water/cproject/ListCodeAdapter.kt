@@ -18,29 +18,30 @@ class ListCodeAdapter(context: Context, data: ArrayList<String>?) : BaseAdapter(
 
     init {
         this.list = data
-        inflater = LayoutInflater.from(context)
+        this.inflater = LayoutInflater.from(context)
     }
 
     override fun getCount(): Int {
         return this.list!!.size
     }
-
     override fun getItem(position: Int): Any {
         return list!![position]
     }
-
     override fun getItemId(position: Int): Long {
         return 0
     }
-
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-        var convertView = convertView
+        val view: View?
+
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.layout_list, parent, false)
+            view = this.inflater.inflate(R.layout.layout_list, parent, false)
+        }
+        else {
+            view = convertView
         }
 
-        val code = convertView!!.findViewById<TextView>(R.id.textView_layout_list)
+        val code = view!!.findViewById(R.id.textView_layout_list) as TextView
         if (!list!!.isEmpty()) code.text = list[position]
-        return convertView
+        return view
     }
 }

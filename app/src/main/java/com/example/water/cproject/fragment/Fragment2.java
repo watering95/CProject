@@ -42,6 +42,7 @@ public class Fragment2 extends Fragment {
     private DBResolver resolver;
     private ArrayList<String> listsCode;
     private ListCodeAdapter listAdapter;
+    private ListView listView;
 
     public Fragment2() {
     }
@@ -55,7 +56,10 @@ public class Fragment2 extends Fragment {
         resolver = mainActivity.resolver;
 
         mainActivity.setFrag2Callback(new MainActivity.Frag2Callback() {
-
+            @Override
+            public void updateView() {
+                Fragment2.this.updateView();
+            }
         });
     }
 
@@ -72,8 +76,8 @@ public class Fragment2 extends Fragment {
 
     private void initLayout() {
         listsCode = resolver.getCodes(mainActivity.getToday());
-        final ListView listView = mView.findViewById(R.id.listView_frag2);
-        listAdapter = new ListCodeAdapter(mView.getContext(), listsCode);
+        listView = mView.findViewById(R.id.listView_frag2);
+        listAdapter = new ListCodeAdapter(getContext(), listsCode);
         if(listsCode != null) {
             listView.setAdapter(listAdapter);
             makeHTMLFile(listsCode.get(0));
@@ -90,13 +94,13 @@ public class Fragment2 extends Fragment {
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                    UserDialogFragment dialog = UserDialogFragment.newInstance(position, new UserDialogFragment.UserListener() {
+                    UserDialogFragment dialog = UserDialogFragment.Companion.newInstance(position, new UserDialogFragment.UserListener() {
                         @Override
                         public void onWorkComplete() {
                             updateView();
                         }
                     });
-                    dialog.show(getFragmentManager(), "dialog");
+                    dialog.show(mainActivity.getSupportFragmentManager(), "dialog");
 
                 return true;
             }
@@ -106,7 +110,14 @@ public class Fragment2 extends Fragment {
         listsCode.clear();
         listsCode = resolver.getCodes(mainActivity.getToday());
 
-        listAdapter.notifyDataSetChanged();
+        listView = mView.findViewById(R.id.listView_frag2);
+        listAdapter = new ListCodeAdapter(getContext(), listsCode);
+        if(listsCode != null) {
+            listView.setAdapter(listAdapter);
+        }
+
+        makeHTMLFile(listsCode.get(0));
+        mWeb.reload();
     }
     private void openWebView() {
         mWeb = mView.findViewById(R.id.webView_frag2);

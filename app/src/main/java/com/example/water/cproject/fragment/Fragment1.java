@@ -9,10 +9,12 @@ import android.view.ViewGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.water.cproject.genuino.Accelerometer;
-import com.example.water.cproject.genuino.Gyroscope;
 import com.example.water.cproject.MainActivity;
 import com.example.water.cproject.R;
+import com.example.water.cproject.ble.BLE;
+import com.example.water.cproject.genuino.Accelerometer;
+import com.example.water.cproject.genuino.Gyroscope;
+import com.example.water.cproject.machine.Machine;
 
 import java.util.Locale;
 
@@ -23,6 +25,8 @@ import java.util.Locale;
 @SuppressWarnings("DefaultFileTemplate")
 public class Fragment1 extends Fragment {
 
+    private BLE ble;
+    private Machine machine;
     private View mView;
     private MainActivity mainActivity;
     private TextView peripheralName;
@@ -42,6 +46,8 @@ public class Fragment1 extends Fragment {
 
         mainActivity = (MainActivity) getActivity();
         assert mainActivity != null;
+        this.machine = mainActivity.machine;
+        this.ble = machine.getControlBoard().getBLE();
 
         mainActivity.setFrag1Callback(new MainActivity.Frag1Callback() {
             @Override
@@ -97,6 +103,20 @@ public class Fragment1 extends Fragment {
         return mView;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(ble.getConnectState()) {
+            deviceStatus.setText(R.string.ble_connected);
+            peripheralName.setText(ble.getName());
+            peripheralAddress.setText(ble.getPeripheralAddress());
+        }
+        else {
+            deviceStatus.setText(R.string.ble_disconnected);
+        }
+        motorSpeed.setText(String.valueOf(machine.getRunSpeed()));
+    }
+
     private void initLayout() {
         peripheralName = mView.findViewById(R.id.deviceName);
         peripheralAddress = mView.findViewById(R.id.deviceAddress);
@@ -123,12 +143,10 @@ public class Fragment1 extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mainActivity.machine.setRunSpeed(progress);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress;
@@ -141,12 +159,10 @@ public class Fragment1 extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mainActivity.machine.setSpeedOffsetLeft(progress);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
 
@@ -157,12 +173,10 @@ public class Fragment1 extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mainActivity.machine.setSpeedOffsetRight(progress);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
 

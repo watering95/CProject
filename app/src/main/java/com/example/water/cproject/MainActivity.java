@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean isScanningMachine;
     private boolean isFindMachine;
 
-
     private static final boolean SCAN_START = true;
     private static final boolean SCAN_STOP = false;
     private static final int REQUEST_ENABLE_BT = 1;
@@ -71,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private Fragment1 fragment1;
     private Fragment2 fragment2;
 
-    private Frag1Callback frag1Callback;
+    public Frag1Callback frag1Callback;
     private Frag2Callback frag2Callback;
 
     public interface Frag1Callback {
@@ -82,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         void updatePeripheral(String name, String address);
     }
     public interface Frag2Callback {
-
+        void updateView();
     }
 
     public void setFrag1Callback(Frag1Callback callback) {
@@ -338,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
     }
-    private void displayConnectionState(final int resourceId) {
+    public void displayConnectionState(final int resourceId) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -418,7 +417,7 @@ public class MainActivity extends AppCompatActivity {
 
                         ble.setName(result.getDevice().getName());
                         ble.setPeripheralAddress(result.getDevice().getAddress());
-                        frag1Callback.updatePeripheral(ble.getName(),ble.getPeripheralAddress());
+                        frag1Callback.updatePeripheral(ble.getName(), ble.getPeripheralAddress());
                         displayConnectionState(R.string.success_ble_scan);
                         isFindMachine = true;
                         machine.commConnect();
@@ -442,39 +441,44 @@ public class MainActivity extends AppCompatActivity {
             Gyroscope gyro = machine.getControlBoard().getGyroscope();
             Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
 
-            if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-                machine.getControlBoard().getBLE().setConnectState(true);
-                scanBLEDevice(SCAN_STOP);
-                displayConnectionState(R.string.ble_connected);
-                invalidateOptionsMenu();
-            } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                displayConnectionState(R.string.ble_disconnected);
-                machine.getControlBoard().getBLE().setConnectState(false);
-                isFindMachine = false;
-                invalidateOptionsMenu();
-            } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Select Genuino services and characteristics on the user interface.
-                machine.getGattServices();
-                machine.readMachineState();
-            } else if (IMUService.ACTION.equals(action)) {
-                Bundle bundle = intent.getBundleExtra(IMUService.DATA);
+            assert action != null;
+            switch (action) {
+                case BLEService.ACTION_GATT_CONNECTED:
+                    machine.getControlBoard().getBLE().setConnectState(true);
+                    scanBLEDevice(SCAN_STOP);
+                    displayConnectionState(R.string.ble_connected);
+                    invalidateOptionsMenu();
+                    break;
+                case BLEService.ACTION_GATT_DISCONNECTED:
+                    displayConnectionState(R.string.ble_disconnected);
+                    machine.getControlBoard().getBLE().setConnectState(false);
+                    isFindMachine = false;
+                    invalidateOptionsMenu();
+                    break;
+                case BLEService.ACTION_GATT_SERVICES_DISCOVERED:
+                    // Select Genuino services and characteristics on the user interface.
+                    machine.getGattServices();
+                    machine.readMachineState();
+                    break;
+                case IMUService.ACTION:
+                    Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
-                int state = bundle.getInt("state");
-                float imu[] = bundle.getFloatArray("imu");
+                    int state = bundle.getInt("state");
+                    float imu[] = bundle.getFloatArray("imu");
 
-                machine.setMotorState(state);
+                    machine.setMotorState(state);
 
-                assert imu != null;
-                gyro.updateData(imu[0], imu[1], imu[2]);
-                accelerometer.updateData(imu[3], imu[4], imu[5]);
+                    assert imu != null;
+                    gyro.updateData(imu[0], imu[1], imu[2]);
+                    accelerometer.updateData(imu[3], imu[4], imu[5]);
 
-                if(dataCode != null) {
-                    resolver.insertMachine(resolver.getCodeId(dataCode), state, imu);
-                }
+                    if (dataCode != null) {
+                        resolver.insertMachine(resolver.getCodeId(dataCode), state, imu);
+                    }
 
-                frag1Callback.updateGyro(gyro.getData());
-                frag1Callback.updateAccelerometer(accelerometer.getData());
-                frag1Callback.updateMotorState(machine.getMotorState());
+                    updateMachineState();
+
+                    break;
             }
         }
     };
@@ -548,6 +552,15 @@ public class MainActivity extends AppCompatActivity {
     }
     public String calendarToStr(Calendar calendar) {
         return String.format(Locale.getDefault(), "%04d-%02d-%02d", calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH)+1,calendar.get(Calendar.DATE));
+    }
+
+    public void updateMachineState() {
+        Gyroscope gyro = machine.getControlBoard().getGyroscope();
+        Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
+
+        frag1Callback.updateGyro(gyro.getData());
+        frag1Callback.updateAccelerometer(accelerometer.getData());
+        frag1Callback.updateMotorState(machine.getMotorState());
     }
 }
 
