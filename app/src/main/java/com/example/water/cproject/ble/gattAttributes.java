@@ -19,6 +19,7 @@ public class gattAttributes {
     public static final String UUID_MOTOR_DIRECTION = "00000175-0000-1000-8000-00805f9b34fb";
     public static final String UUID_MOTOR_LEFT_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
     public static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_IS_AUTO = "00000178-0000-1000-8000-00805f9b34fb";
 
     public final static String MACHINE_STATE =
             "com.example.bluetooth.le.ACTION";
@@ -28,6 +29,8 @@ public class gattAttributes {
             "com.example.bluetooth.le.MOTOR_LEFT_SPEED";
     private final static String MOTOR_RIGHT_SPEED =
             "com.example.bluetooth.le.MOTOR_RIGHT_SPEED";
+    private final static String MOTOR_IS_AUTO =
+            "com.example.bluetooth.le.IS_AUTO";
 
     private final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
@@ -43,6 +46,7 @@ public class gattAttributes {
         attributes.put(UUID_MOTOR_DIRECTION, "Motor Direction");
         attributes.put(UUID_MOTOR_LEFT_SPEED, "Motor Left Speed");
         attributes.put(UUID_MOTOR_RIGHT_SPEED, "Motor Right Speed");
+        attributes.put(UUID_IS_AUTO, "Auto mode");
     }
 
     static String lookup(String uuid, String defaultName) {
@@ -63,11 +67,14 @@ public class gattAttributes {
             case UUID_MOTOR_RIGHT_SPEED:
                 intent.putExtra(MOTOR_RIGHT_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
                 break;
+            case UUID_IS_AUTO:
+                intent.putExtra(MOTOR_IS_AUTO, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+                break;
             case UUID_MACHINE_STATE:
                 intent.putExtra(MACHINE_STATE, data);
                 break;
             default:
-                // For all other profiles, writes the data formatted in HEX.
+                // For all other profiles, writes the imu formatted in HEX.
                 if (data != null && data.length > 0) {
                     final StringBuilder stringBuilder = new StringBuilder(data.length);
                     for(byte byteChar : data)

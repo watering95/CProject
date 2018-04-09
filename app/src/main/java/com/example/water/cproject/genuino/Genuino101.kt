@@ -15,8 +15,7 @@ import com.example.water.cproject.machine.IMUService
 
 class Genuino101 {
     val ble = BLE()
-    val gyroscope = Gyroscope()
-    val accelerometer = Accelerometer()
+    val imu = IMU()
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, service: IBinder) {

@@ -17,11 +17,14 @@ import java.util.List;
 
 @SuppressWarnings("DefaultFileTemplate")
 public class Machine {
-    public final int MOTOR_FORWARD = 1;
-    public final int MOTOR_BACKWARD = 4;
-    public final int MOTOR_LEFT = 3;
-    public final int MOTOR_RIGHT = 2;
+    public final int MOTOR_FORWARD = 2;
+    public final int MOTOR_BACKWARD = 5;
+    public final int MOTOR_LEFT = 4;
+    public final int MOTOR_RIGHT = 3;
     public final int MOTOR_STOP = 0;
+    public final int MOTOR_RUN = 1;
+    public final int IS_AUTO = 1;
+    public final int IS_MANUAL = 0;
 
     private final Genuino101 genuino = new Genuino101();
     private final BLE ble = genuino.getBLE();
@@ -29,6 +32,7 @@ public class Machine {
     private BluetoothGattCharacteristic mCharacteristicMotorDirection;
     private BluetoothGattCharacteristic mCharacteristicMotorLeftSpeed;
     private BluetoothGattCharacteristic mCharacteristicMotorRightSpeed;
+    private BluetoothGattCharacteristic mCharacteristicIsAuto;
     private BluetoothGattCharacteristic mCharacteristicMachineState;
 
     private int speedMain = 0, speedOffsetLeft, speedOffsetRight;
@@ -61,13 +65,14 @@ public class Machine {
         this.motorState = state;
     }
 
-    public void transferMovingOperation(int direction) {
+    public void operate(int operation) {
         int speedLeft = speedMain + speedOffsetLeft;
         int speedRight = speedMain + speedOffsetRight;
 
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorLeftSpeed, speedLeft);
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
-        if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, direction);
+        if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, operation);
+        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, operation);
     }
     public void commConnect() {
         ble.connect();
@@ -96,7 +101,7 @@ public class Machine {
     }
 
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.
-    // In this sample, we populate the data structure that is bound to the ExpandableListView
+    // In this sample, we populate the imu structure that is bound to the ExpandableListView
     // on the UI.
     private void getGattServices(List<BluetoothGattService> gattServices) {
         String uuid;
@@ -119,6 +124,9 @@ public class Machine {
                         break;
                     case gattAttributes.UUID_MOTOR_RIGHT_SPEED:
                         mCharacteristicMotorRightSpeed = gattCharacteristic;
+                        break;
+                    case gattAttributes.UUID_IS_AUTO:
+                        mCharacteristicIsAuto = gattCharacteristic;
                         break;
                     case gattAttributes.UUID_MACHINE_STATE:
                         mCharacteristicMachineState = gattCharacteristic;

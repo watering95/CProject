@@ -43,12 +43,9 @@ public class DBResolver{
         cv.put("id_code",code);
         cv.put("time", mainActivity.getNow());
         cv.put("state",state);
-        cv.put("gx",imu[0]);
-        cv.put("gy",imu[1]);
-        cv.put("gz",imu[2]);
-        cv.put("ax",imu[3]);
-        cv.put("ay",imu[4]);
-        cv.put("az",imu[5]);
+        cv.put("angleX",imu[0]);
+        cv.put("angleY",imu[1]);
+        cv.put("angleZ",imu[2]);
 
         try {
             cr.insert(Uri.parse(URI_MACHINE), cv);
@@ -166,12 +163,12 @@ public class DBResolver{
             switch (code) {
                 case CODE_MACHINE:
                     infoMachine = new InfoMachine();
-                    imu = new float[6];
+                    imu = new float[3];
                     infoMachine.setCode(cursor.getInt(1));
                     infoMachine.setTime(cursor.getString(2));
                     infoMachine.setState(cursor.getInt(3));
 
-                    for(int i = 0; i < 6; i++) {
+                    for(int i = 0; i < 3; i++) {
                         imu[i] = cursor.getFloat(i + 4);
                     }
                     infoMachine.setImu(imu);

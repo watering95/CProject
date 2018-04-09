@@ -12,8 +12,7 @@ import android.widget.TextView;
 import com.example.water.cproject.MainActivity;
 import com.example.water.cproject.R;
 import com.example.water.cproject.ble.BLE;
-import com.example.water.cproject.genuino.Accelerometer;
-import com.example.water.cproject.genuino.Gyroscope;
+import com.example.water.cproject.genuino.IMU;
 import com.example.water.cproject.machine.Machine;
 
 import java.util.Locale;
@@ -34,8 +33,7 @@ public class Fragment1 extends Fragment {
     private TextView deviceStatus;
     private TextView motorSpeed;
     private TextView motorState;
-    private TextView gyroX, gyroY, gyroZ;
-    private TextView accelerometerX, accelerometerY, accelerometerZ;
+    private TextView angleX, angleY, angleZ;
 
     public Fragment1() {
     }
@@ -55,17 +53,12 @@ public class Fragment1 extends Fragment {
                 deviceStatus.setText(resourceId);
             }
             @Override
-            public void updateGyro(Gyroscope gyro) {
-                gyroX.setText(String.format(Locale.getDefault(), "%.03f",gyro.getX()));
-                gyroY.setText(String.format(Locale.getDefault(), "%.03f",gyro.getY()));
-                gyroZ.setText(String.format(Locale.getDefault(), "%.03f",gyro.getZ()));
+            public void updateAngle(IMU imu) {
+                angleX.setText(String.format(Locale.getDefault(), "%.03f",imu.getX()));
+                angleY.setText(String.format(Locale.getDefault(), "%.03f",imu.getY()));
+                angleZ.setText(String.format(Locale.getDefault(), "%.03f",imu.getZ()));
             }
-            @Override
-            public void updateAccelerometer(Accelerometer accelerometer) {
-                accelerometerX.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getX()));
-                accelerometerY.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getY()));
-                accelerometerZ.setText(String.format(Locale.getDefault(), "%.03f",accelerometer.getZ()));
-            }
+
             @Override
             public void updatePeripheral(String name, String address) {
                 peripheralName.setText(name);
@@ -127,12 +120,9 @@ public class Fragment1 extends Fragment {
         motorSpeed.setText("0");
         motorState.setText("Stop");
 
-        gyroX = mView.findViewById(R.id.gx);
-        gyroY = mView.findViewById(R.id.gy);
-        gyroZ = mView.findViewById(R.id.gz);
-        accelerometerX = mView.findViewById(R.id.ax);
-        accelerometerY = mView.findViewById(R.id.ay);
-        accelerometerZ = mView.findViewById(R.id.az);
+        angleX = mView.findViewById(R.id.anglex);
+        angleY = mView.findViewById(R.id.angley);
+        angleZ = mView.findViewById(R.id.anglez);
 
         SeekBar sbSpeed = mView.findViewById(R.id.seekBarSpeed);
         SeekBar sbSpeedLeft = mView.findViewById(R.id.seekBarLeftSpeed);

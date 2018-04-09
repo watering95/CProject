@@ -31,8 +31,7 @@ import com.example.water.cproject.ble.BLE;
 import com.example.water.cproject.ble.BLEService;
 import com.example.water.cproject.fragment.Fragment1;
 import com.example.water.cproject.fragment.Fragment2;
-import com.example.water.cproject.genuino.Accelerometer;
-import com.example.water.cproject.genuino.Gyroscope;
+import com.example.water.cproject.genuino.IMU;
 import com.example.water.cproject.machine.IMUService;
 import com.example.water.cproject.machine.Machine;
 
@@ -76,8 +75,7 @@ public class MainActivity extends AppCompatActivity {
     public interface Frag1Callback {
         void updateMachineState(int resourceId);
         void updateMotorState(int state);
-        void updateGyro(Gyroscope gyro);
-        void updateAccelerometer(Accelerometer accelerometer);
+        void updateAngle(IMU gyro);
         void updatePeripheral(String name, String address);
     }
     public interface Frag2Callback {
@@ -199,26 +197,34 @@ public class MainActivity extends AppCompatActivity {
     public void onClick(View v) {
         if (!machine.getControlBoard().getBLE().getConnectState()) return;
         switch (v.getId()) {
+            case R.id.buttonAutoRun:
+                machine.operate(machine.IS_AUTO);
+                machine.operate(machine.MOTOR_RUN);
+                break;
+            case R.id.buttonAutoStop:
+                machine.operate(machine.MOTOR_STOP);
+                machine.operate(machine.IS_MANUAL);
+                break;
             case R.id.buttonRun:
-                machine.transferMovingOperation(machine.MOTOR_FORWARD);
+                machine.operate(machine.MOTOR_RUN);
                 boolean dataRecord = true;
                 makeCode();
                 break;
             case R.id.buttonStop:
-                machine.transferMovingOperation(machine.MOTOR_STOP);
+                machine.operate(machine.MOTOR_STOP);
                 dataRecord = false;
                 break;
             case R.id.buttonRight:
-                machine.transferMovingOperation(machine.MOTOR_RIGHT);
+                machine.operate(machine.MOTOR_RIGHT);
                 break;
             case R.id.buttonLeft:
-                machine.transferMovingOperation(machine.MOTOR_LEFT);
+                machine.operate(machine.MOTOR_LEFT);
                 break;
             case R.id.buttonBack:
-                machine.transferMovingOperation(machine.MOTOR_BACKWARD);
+                machine.operate(machine.MOTOR_BACKWARD);
                 break;
             default:
-                machine.transferMovingOperation(machine.MOTOR_STOP);
+                machine.operate(machine.MOTOR_STOP);
                 dataRecord = false;
                 break;
         }
@@ -432,14 +438,13 @@ public class MainActivity extends AppCompatActivity {
     // ACTION_GATT_CONNECTED: connected to a GATT server.
     // ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
     // ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
-    // ACTION_DATA_AVAILABLE: received data from the device.  This can be a result of read
+    // ACTION_DATA_AVAILABLE: received imu from the device.  This can be a result of read
     //                        or notification operations.
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            Gyroscope gyro = machine.getControlBoard().getGyroscope();
-            Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
+            IMU imu = machine.getControlBoard().getImu();
 
             assert action != null;
             switch (action) {
@@ -464,16 +469,15 @@ public class MainActivity extends AppCompatActivity {
                     Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
                     int state = bundle.getInt("state");
-                    float imu[] = bundle.getFloatArray("imu");
+                    float angle[] = bundle.getFloatArray("imu");
 
                     machine.setMotorState(state);
 
-                    assert imu != null;
-                    gyro.updateData(imu[0], imu[1], imu[2]);
-                    accelerometer.updateData(imu[3], imu[4], imu[5]);
+                    assert angle != null;
+                    imu.updateAngle(angle[0], angle[1], angle[2]);
 
                     if (dataCode != null) {
-                        resolver.insertMachine(resolver.getCodeId(dataCode), state, imu);
+                        resolver.insertMachine(resolver.getCodeId(dataCode), state, angle);
                     }
 
                     updateMachineState();
@@ -555,11 +559,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateMachineState() {
-        Gyroscope gyro = machine.getControlBoard().getGyroscope();
-        Accelerometer accelerometer = machine.getControlBoard().getAccelerometer();
+        IMU imu = machine.getControlBoard().getImu();
 
-        frag1Callback.updateGyro(gyro.getData());
-        frag1Callback.updateAccelerometer(accelerometer.getData());
+        frag1Callback.updateAngle(imu.getImu());
         frag1Callback.updateMotorState(machine.getMotorState());
     }
 }

@@ -76,8 +76,37 @@
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="■ Auto Mode" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/buttonAutoRun"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Auto Run"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/buttonAutoStop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Auto Stop"
+            android:onClick="onClick"
+            android:layout_weight="1" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_marginTop="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_marginTop="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="■ Motor" />
+            android:text="■ Manual Mode" />
         <TextView
             android:id="@+id/motorState"
             android:layout_marginTop="5dp"
@@ -163,34 +192,18 @@
         android:stretchColumns="*">
         <TableRow>
             <TextView
-                android:text="Gyro"
+                android:text="Angle"
                 android:layout_span="3"/>
         </TableRow>
         <TableRow>
             <TextView
-                android:id="@+id/gx"
+                android:id="@+id/anglex"
                 android:text="0"/>
             <TextView
-                android:id="@+id/gy"
+                android:id="@+id/angley"
                 android:text="0"/>
             <TextView
-                android:id="@+id/gz"
-                android:text="0"/>
-        </TableRow>
-        <TableRow>
-            <TextView
-                android:text="Accelerometer"
-                android:layout_span="3"/>
-        </TableRow>
-        <TableRow>
-            <TextView
-                android:id="@+id/ax"
-                android:text="0"/>
-            <TextView
-                android:id="@+id/ay"
-                android:text="0"/>
-            <TextView
-                android:id="@+id/az"
+                android:id="@+id/anglez"
                 android:text="0"/>
         </TableRow>
     </TableLayout>

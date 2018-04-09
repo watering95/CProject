@@ -149,8 +149,7 @@ public class Fragment2 extends Fragment {
                     date.append(infoCode.getDate()).append("T").append(infoMachine.getTime()).append("-0800");
                 }
                  data.append("[").append("new Date('").append(date).append("'), ")
-                    .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2])).append(", ")
-                    .append(String.valueOf(imu[3])).append(", ").append(String.valueOf(imu[4])).append(", ").append(String.valueOf(imu[5]))
+                    .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2]))
                     .append("],\n");
                 index++;
             } while(index < limit);
@@ -162,20 +161,17 @@ public class Fragment2 extends Fragment {
             StringBuilder function = new StringBuilder();
             function.append("function drawChart() {\n")
                 .append("var chartDiv = document.getElementById('chart_div');\n\n")
-                .append("var data = new google.visualization.DataTable();\n")
-                .append("data.addColumn('datetime','Time');\n")
-                .append("data.addColumn('number','gx');\n")
-                .append("data.addColumn('number','gy');\n")
-                .append("data.addColumn('number','gz');\n")
-                .append("data.addColumn('number','ax');\n")
-                .append("data.addColumn('number','ay');\n")
-                .append("data.addColumn('number','az');\n")
-                .append("data.addRows([\n").append(data).append("]);\n\n")
+                .append("var imu = new google.visualization.DataTable();\n")
+                .append("imu.addColumn('datetime','Time');\n")
+                .append("imu.addColumn('number','angleX');\n")
+                .append("imu.addColumn('number','angleY');\n")
+                .append("imu.addColumn('number','angleZ');\n")
+                .append("imu.addRows([\n").append(data).append("]);\n\n")
                 .append("var options = {\n")
                 .append("chart: {title: 'IMU Data'}\n")
                 .append("};\n\n")
                 .append("var chart = new google.visualization.LineChart(chartDiv);\n")
-                .append("chart.draw(data, options);\n").append("}\n");
+                .append("chart.draw(imu, options);\n").append("}\n");
 
             StringBuilder script = new StringBuilder();
             script.append("<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n")
