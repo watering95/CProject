@@ -134,7 +134,7 @@ public class Fragment2 extends Fragment {
             StringBuffer date = new StringBuffer();
             InfoMachine infoMachine;
             InfoCode infoCode;
-            float[] imu = new float[6];
+            float[] angle = new float[3];
 
             List<InfoMachine> listInfoMachine = resolver.getInfoMachine(code);
 
@@ -143,13 +143,13 @@ public class Fragment2 extends Fragment {
             do {
                 if(listInfoMachine != null) {
                     infoMachine = listInfoMachine.get(index);
-                    imu = infoMachine.getImu();
+                    angle = infoMachine.getAngle();
                     infoCode = resolver.getCode(infoMachine.getCode());
                     date = new StringBuffer();
                     date.append(infoCode.getDate()).append("T").append(infoMachine.getTime()).append("-0800");
                 }
                  data.append("[").append("new Date('").append(date).append("'), ")
-                    .append(String.valueOf(imu[0])).append(", ").append(String.valueOf(imu[1])).append(", ").append(String.valueOf(imu[2]))
+                    .append(String.valueOf(angle[0])).append(", ").append(String.valueOf(angle[1])).append(", ").append(String.valueOf(angle[2]))
                     .append("],\n");
                 index++;
             } while(index < limit);
