@@ -70,7 +70,7 @@ public class IMUService extends Service {
             if (ACTION_DATA_AVAILABLE.equals(action)) {
                 ByteBuffer receiveBuffer = ByteBuffer.wrap(intent.getByteArrayExtra(gattAttributes.MACHINE_STATE));
                 Map<String, byte[]> byteMaps = new ArrayMap<>();
-                String key[] = {"machineState", "gx", "gy", "gz", "ax", "ay", "az"};
+                String key[] = {"machineState", "angleX", "angleY", "angleZ"};
 
                 byte b;
 
@@ -95,15 +95,15 @@ public class IMUService extends Service {
 
                 try {
                     int state = Integer.valueOf(getString(byteMaps.get(key[0])));
-                    float[] imu = new float[6];
+                    float[] angle = new float[3];
 
-                    for (int i = 0; i < 6; i++) {
-                        imu[i] = Float.valueOf(getString(byteMaps.get(key[i + 1])));
+                    for (int i = 0; i < 3; i++) {
+                        angle[i] = Float.valueOf(getString(byteMaps.get(key[i + 1])));
                     }
                     byteMaps.clear();
 
                     bundleBLE.putInt("state",state);
-                    bundleBLE.putFloatArray("imu",imu);
+                    bundleBLE.putFloatArray("angle",angle);
 
                     broadcastUpdate(ACTION, bundleBLE);
                 } catch (Exception e) {

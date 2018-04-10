@@ -469,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
                     int state = bundle.getInt("state");
-                    float angle[] = bundle.getFloatArray("imu");
+                    float angle[] = bundle.getFloatArray("angle");
 
                     machine.setMotorState(state);
 

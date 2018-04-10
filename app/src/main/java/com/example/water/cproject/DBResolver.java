@@ -163,7 +163,7 @@ public class DBResolver{
             switch (code) {
                 case CODE_MACHINE:
                     infoMachine = new InfoMachine();
-                    imu = new float[3];
+                    angle = new float[3];
                     infoMachine.setCode(cursor.getInt(1));
                     infoMachine.setTime(cursor.getString(2));
                     infoMachine.setState(cursor.getInt(3));
