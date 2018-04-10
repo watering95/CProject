@@ -37,15 +37,15 @@ public class DBResolver{
         this.cr = cr;
     }
 
-    void insertMachine(int code, int state, float[] imu) {
+    void insertMachine(int code, int state, float[] angle) {
         ContentValues cv = new ContentValues();
 
         cv.put("id_code",code);
         cv.put("time", mainActivity.getNow());
         cv.put("state",state);
-        cv.put("angleX",imu[0]);
-        cv.put("angleY",imu[1]);
-        cv.put("angleZ",imu[2]);
+        cv.put("angleX",angle[0]);
+        cv.put("angleY",angle[1]);
+        cv.put("angleZ",angle[2]);
 
         try {
             cr.insert(Uri.parse(URI_MACHINE), cv);
@@ -139,7 +139,7 @@ public class DBResolver{
         Cursor cursor;
         InfoMachine infoMachine;
         InfoCode infoCode;
-        float[] imu;
+        float[] angle;
 
         switch (code) {
             case CODE_MACHINE:
@@ -169,9 +169,9 @@ public class DBResolver{
                     infoMachine.setState(cursor.getInt(3));
 
                     for(int i = 0; i < 3; i++) {
-                        imu[i] = cursor.getFloat(i + 4);
+                        angle[i] = cursor.getFloat(i + 4);
                     }
-                    infoMachine.setImu(imu);
+                    infoMachine.setAngle(angle);
                     listsInfoMachine.add(infoMachine);
                     break;
                 case CODE_CODE:
