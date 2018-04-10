@@ -8,5 +8,5 @@ class InfoMachine {
     var code: Int = 0
     var time: String? = null
     var state: Int = 0
-    var imu = FloatArray(6)
+    var angle = FloatArray(3)
 }
