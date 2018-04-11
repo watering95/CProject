@@ -207,12 +207,10 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.buttonRun:
                 machine.operate(machine.MOTOR_RUN);
-                boolean dataRecord = true;
                 makeCode();
                 break;
             case R.id.buttonStop:
                 machine.operate(machine.MOTOR_STOP);
-                dataRecord = false;
                 break;
             case R.id.buttonRight:
                 machine.operate(machine.MOTOR_RIGHT);
@@ -225,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             default:
                 machine.operate(machine.MOTOR_STOP);
-                dataRecord = false;
                 break;
         }
     }
