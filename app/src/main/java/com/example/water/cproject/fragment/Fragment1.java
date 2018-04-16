@@ -71,13 +71,13 @@ public class Fragment1 extends Fragment {
                         motorState.setText("Run");
                         break;
                     case 4:
-                        motorState.setText("Back");
-                        break;
-                    case 3:
                         motorState.setText("Left");
                         break;
-                    case 2:
+                    case 3:
                         motorState.setText("Right");
+                        break;
+                    case 5:
+                        motorState.setText("Back");
                         break;
                     case 0:
                         motorState.setText("Stop");

@@ -65,14 +65,14 @@ public class Machine {
         this.motorState = state;
     }
 
-    public void operate(int operation) {
+    public void operate(int mode, int operation) {
         int speedLeft = speedMain + speedOffsetLeft;
         int speedRight = speedMain + speedOffsetRight;
 
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorLeftSpeed, speedLeft);
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
         if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, operation);
-        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, operation);
+        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, mode);
     }
     public void commConnect() {
         ble.connect();

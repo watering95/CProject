@@ -198,31 +198,29 @@ public class MainActivity extends AppCompatActivity {
         if (!machine.getControlBoard().getBLE().getConnectState()) return;
         switch (v.getId()) {
             case R.id.buttonAutoRun:
-                machine.operate(machine.IS_AUTO);
-                machine.operate(machine.MOTOR_RUN);
+                machine.operate(machine.IS_AUTO, machine.MOTOR_RUN);
                 break;
             case R.id.buttonAutoStop:
-                machine.operate(machine.MOTOR_STOP);
-                machine.operate(machine.IS_MANUAL);
+                machine.operate(machine.IS_AUTO, machine.MOTOR_STOP);
                 break;
             case R.id.buttonRun:
-                machine.operate(machine.MOTOR_RUN);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_RUN);
                 makeCode();
                 break;
             case R.id.buttonStop:
-                machine.operate(machine.MOTOR_STOP);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_STOP);
                 break;
             case R.id.buttonRight:
-                machine.operate(machine.MOTOR_RIGHT);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_RIGHT);
                 break;
             case R.id.buttonLeft:
-                machine.operate(machine.MOTOR_LEFT);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_LEFT);
                 break;
             case R.id.buttonBack:
-                machine.operate(machine.MOTOR_BACKWARD);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_BACKWARD);
                 break;
             default:
-                machine.operate(machine.MOTOR_STOP);
+                machine.operate(machine.IS_MANUAL, machine.MOTOR_STOP);
                 break;
         }
     }
