@@ -54,9 +54,9 @@ public class Fragment1 extends Fragment {
             }
             @Override
             public void updateAngle(IMU imu) {
-                angleX.setText(String.format(Locale.getDefault(), "%.03f",imu.getX()));
-                angleY.setText(String.format(Locale.getDefault(), "%.03f",imu.getY()));
-                angleZ.setText(String.format(Locale.getDefault(), "%.03f",imu.getZ()));
+                angleX.setText(String.format(Locale.getDefault(), "Roll : %.03f",imu.getX()));
+                angleY.setText(String.format(Locale.getDefault(), "Pitch : %.03f",imu.getY()));
+                angleZ.setText(String.format(Locale.getDefault(), "Yaw : %.03f",imu.getZ()));
             }
 
             @Override

@@ -76,7 +76,7 @@
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="■ Auto Mode" />
+            android:text="■ Mode" />
     </LinearLayout>
     <LinearLayout
         android:layout_marginTop="5dp"
@@ -86,14 +86,14 @@
             android:id="@+id/buttonAutoRun"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Auto Run"
+            android:text="Auto"
             android:onClick="onClick"
             android:layout_weight="1" />
         <Button
             android:id="@+id/buttonAutoStop"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Auto Stop"
+            android:text="Manual"
             android:onClick="onClick"
             android:layout_weight="1" />
     </LinearLayout>
@@ -106,7 +106,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="■ Manual Mode" />
+            android:text="■ Manual" />
         <TextView
             android:id="@+id/motorState"
             android:layout_marginTop="5dp"

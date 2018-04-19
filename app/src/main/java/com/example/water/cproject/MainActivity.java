@@ -198,29 +198,29 @@ public class MainActivity extends AppCompatActivity {
         if (!machine.getControlBoard().getBLE().getConnectState()) return;
         switch (v.getId()) {
             case R.id.buttonAutoRun:
-                machine.operate(machine.IS_AUTO, machine.MOTOR_RUN);
+                machine.setMode(machine.IS_AUTO);
                 break;
             case R.id.buttonAutoStop:
-                machine.operate(machine.IS_AUTO, machine.MOTOR_STOP);
+                machine.setMode(machine.IS_MANUAL);
                 break;
             case R.id.buttonRun:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_RUN);
+                machine.operate(machine.MOTOR_RUN);
                 makeCode();
                 break;
             case R.id.buttonStop:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_STOP);
+                machine.operate(machine.MOTOR_STOP);
                 break;
             case R.id.buttonRight:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_RIGHT);
+                machine.operate(machine.MOTOR_RIGHT);
                 break;
             case R.id.buttonLeft:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_LEFT);
+                machine.operate(machine.MOTOR_LEFT);
                 break;
             case R.id.buttonBack:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_BACKWARD);
+                machine.operate(machine.MOTOR_BACKWARD);
                 break;
             default:
-                machine.operate(machine.IS_MANUAL, machine.MOTOR_STOP);
+                machine.operate(machine.MOTOR_STOP);
                 break;
         }
     }
@@ -466,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
                     int state = bundle.getInt("state");
                     float angle[] = bundle.getFloatArray("angle");
 
-                    machine.setMotorState(state);
+                    machine.setState(state);
 
                     assert angle != null;
                     imu.updateAngle(angle[0], angle[1], angle[2]);
@@ -557,7 +557,7 @@ public class MainActivity extends AppCompatActivity {
         IMU imu = machine.getControlBoard().getImu();
 
         frag1Callback.updateAngle(imu.getImu());
-        frag1Callback.updateMotorState(machine.getMotorState());
+        frag1Callback.updateMotorState(machine.getState());
     }
 }
 

@@ -36,7 +36,7 @@ public class Machine {
     private BluetoothGattCharacteristic mCharacteristicMachineState;
 
     private int speedMain = 0, speedOffsetLeft, speedOffsetRight;
-    private int motorState;
+    private int state, mode;
 
     public Machine() {
 
@@ -48,8 +48,11 @@ public class Machine {
     public int getRunSpeed() {
         return this.speedMain;
     }
-    public int getMotorState() {
-        return this.motorState;
+    public int getState() {
+        return this.state;
+    }
+    public int getMode() {
+        return mode;
     }
 
     public void setRunSpeed(int speed) {
@@ -61,18 +64,21 @@ public class Machine {
     public void setSpeedOffsetRight(int speed) {
         this.speedOffsetRight = speed;
     }
-    public void setMotorState(int state) {
-        this.motorState = state;
+    public void setState(int state) {
+        this.state = state;
+    }
+    public void setMode(int mode) {
+        this.mode = mode;
+        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, mode);
     }
 
-    public void operate(int mode, int operation) {
+    public void operate(int operation) {
         int speedLeft = speedMain + speedOffsetLeft;
         int speedRight = speedMain + speedOffsetRight;
 
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorLeftSpeed, speedLeft);
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
         if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, operation);
-        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, mode);
     }
     public void commConnect() {
         ble.connect();
