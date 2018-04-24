@@ -119,10 +119,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <Button
-            android:id="@+id/buttonRun"
+            android:id="@+id/buttonForward"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Run"
+            android:text="Forward"
             android:onClick="onClick"
             android:layout_weight="1" />
     </LinearLayout>

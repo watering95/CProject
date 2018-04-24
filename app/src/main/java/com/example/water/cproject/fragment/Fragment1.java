@@ -67,17 +67,17 @@ public class Fragment1 extends Fragment {
             @Override
             public void updateMotorState(int state) {
                 switch(state) {
-                    case 1:
-                        motorState.setText("Run");
+                    case 2:
+                        motorState.setText("Forward");
                         break;
                     case 4:
-                        motorState.setText("Left");
+                        motorState.setText("Left Turn");
                         break;
                     case 3:
-                        motorState.setText("Right");
+                        motorState.setText("Right Turn");
                         break;
                     case 5:
-                        motorState.setText("Back");
+                        motorState.setText("Backward");
                         break;
                     case 0:
                         motorState.setText("Stop");
