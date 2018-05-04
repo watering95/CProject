@@ -30,9 +30,10 @@ public class Fragment1 extends Fragment {
     private MainActivity mainActivity;
     private TextView peripheralName;
     private TextView peripheralAddress;
-    private TextView deviceStatus;
-    private TextView motorSpeed;
-    private TextView motorState;
+    private TextView machineStatus;
+    private TextView machineSpeed;
+    private TextView machineState;
+    private TextView machineMode;
     private TextView angleX, angleY, angleZ;
 
     public Fragment1() {
@@ -50,7 +51,7 @@ public class Fragment1 extends Fragment {
         mainActivity.setFrag1Callback(new MainActivity.Frag1Callback() {
             @Override
             public void updateMachineState(int resourceId) {
-                deviceStatus.setText(resourceId);
+                machineStatus.setText(resourceId);
             }
             @Override
             public void updateAngle(IMU imu) {
@@ -58,7 +59,6 @@ public class Fragment1 extends Fragment {
                 angleY.setText(String.format(Locale.getDefault(), "Pitch : %.03f",imu.getY()));
                 angleZ.setText(String.format(Locale.getDefault(), "Yaw : %.03f",imu.getZ()));
             }
-
             @Override
             public void updatePeripheral(String name, String address) {
                 peripheralName.setText(name);
@@ -68,19 +68,30 @@ public class Fragment1 extends Fragment {
             public void updateMotorState(int state) {
                 switch(state) {
                     case 2:
-                        motorState.setText("Forward");
+                        machineState.setText("Forward");
                         break;
                     case 4:
-                        motorState.setText("Left Turn");
+                        machineState.setText("Left Turn");
                         break;
                     case 3:
-                        motorState.setText("Right Turn");
+                        machineState.setText("Right Turn");
                         break;
                     case 5:
-                        motorState.setText("Backward");
+                        machineState.setText("Backward");
                         break;
                     case 0:
-                        motorState.setText("Stop");
+                        machineState.setText("Stop");
+                        break;
+                }
+            }
+            @Override
+            public void updateMachineMode(int mode) {
+                switch(mode) {
+                    case 1:
+                        machineMode.setText("Auto");
+                        break;
+                    case 0:
+                        machineMode.setText("Manual");
                         break;
                 }
             }
@@ -100,25 +111,27 @@ public class Fragment1 extends Fragment {
     public void onResume() {
         super.onResume();
         if(ble.getConnectState()) {
-            deviceStatus.setText(R.string.ble_connected);
+            machineStatus.setText(R.string.ble_connected);
             peripheralName.setText(ble.getName());
             peripheralAddress.setText(ble.getPeripheralAddress());
         }
         else {
-            deviceStatus.setText(R.string.ble_disconnected);
+            machineStatus.setText(R.string.ble_disconnected);
         }
-        motorSpeed.setText(String.valueOf(machine.getRunSpeed()));
+        machineSpeed.setText(String.valueOf(machine.getRunSpeed()));
     }
 
     private void initLayout() {
         peripheralName = mView.findViewById(R.id.deviceName);
         peripheralAddress = mView.findViewById(R.id.deviceAddress);
-        deviceStatus = mView.findViewById(R.id.deviceStatus);
-        motorSpeed = mView.findViewById(R.id.motorSpeed);
-        motorState = mView.findViewById(R.id.motorState);
+        machineStatus = mView.findViewById(R.id.machineStatus);
+        machineMode = mView.findViewById(R.id.machineMode);
+        machineSpeed = mView.findViewById(R.id.motorSpeed);
+        machineState = mView.findViewById(R.id.motorState);
 
-        motorSpeed.setText("0");
-        motorState.setText("Stop");
+        machineMode.setText("Manual");
+        machineSpeed.setText("0");
+        machineState.setText("Stop");
 
         angleX = mView.findViewById(R.id.anglex);
         angleY = mView.findViewById(R.id.angley);
@@ -131,7 +144,9 @@ public class Fragment1 extends Fragment {
         sbSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mainActivity.machine.setRunSpeed(progress);
+                machine.setRunSpeed(progress);
+                machine.sendLeftSpeed();
+                machine.sendRightSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -140,14 +155,15 @@ public class Fragment1 extends Fragment {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 int progress;
-                progress = mainActivity.machine.getRunSpeed();
-                motorSpeed.setText(String.valueOf(progress));
+                progress = machine.getRunSpeed();
+                machineSpeed.setText(String.valueOf(progress));
             }
         });
         sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mainActivity.machine.setSpeedOffsetLeft(progress);
+                machine.setSpeedOffsetLeft(progress);
+                machine.sendLeftSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -161,7 +177,8 @@ public class Fragment1 extends Fragment {
         sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mainActivity.machine.setSpeedOffsetRight(progress);
+                machine.setSpeedOffsetRight(progress);
+                machine.sendRightSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {

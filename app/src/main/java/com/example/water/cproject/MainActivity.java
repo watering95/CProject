@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
     public interface Frag1Callback {
         void updateMachineState(int resourceId);
         void updateMotorState(int state);
+        void updateMachineMode(int mode);
         void updateAngle(IMU gyro);
         void updatePeripheral(String name, String address);
     }
@@ -199,9 +200,11 @@ public class MainActivity extends AppCompatActivity {
         switch (v.getId()) {
             case R.id.buttonAutoRun:
                 machine.setMode(machine.IS_AUTO);
+                machine.sendMode(machine.IS_AUTO);
                 break;
             case R.id.buttonAutoStop:
                 machine.setMode(machine.IS_MANUAL);
+                machine.sendMode(machine.IS_MANUAL);
                 break;
             case R.id.buttonForward:
                 machine.operate(machine.MOTOR_FORWARD);
@@ -463,9 +466,11 @@ public class MainActivity extends AppCompatActivity {
                 case IMUService.ACTION:
                     Bundle bundle = intent.getBundleExtra(IMUService.DATA);
 
+                    int mode = bundle.getInt("mode");
                     int state = bundle.getInt("state");
                     float angle[] = bundle.getFloatArray("angle");
 
+                    machine.setMode(mode);
                     machine.setState(state);
 
                     assert angle != null;
@@ -558,6 +563,7 @@ public class MainActivity extends AppCompatActivity {
 
         frag1Callback.updateAngle(imu.getImu());
         frag1Callback.updateMotorState(machine.getState());
+        frag1Callback.updateMachineMode(machine.getMode());
     }
 }
 

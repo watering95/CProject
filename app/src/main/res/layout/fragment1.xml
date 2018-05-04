@@ -12,7 +12,7 @@
             android:layout_height="wrap_content"
             android:text="■ BLE Status : " />
         <TextView
-            android:id="@+id/deviceStatus"
+            android:id="@+id/machineStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="TextView" />
@@ -76,7 +76,13 @@
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="■ Mode" />
+            android:text="■ Mode : " />
+        <TextView
+            android:layout_marginTop="5dp"
+            android:id="@+id/machineMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TextView" />
     </LinearLayout>
     <LinearLayout
         android:layout_marginTop="5dp"
@@ -105,14 +111,12 @@
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="■ Manual" />
+            android:text="■ Manual : " />
         <TextView
             android:id="@+id/motorState"
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="5" />
+            android:layout_height="wrap_content" />
     </LinearLayout>
     <LinearLayout
         android:layout_marginTop="5dp"
