@@ -69,15 +69,25 @@ public class Machine {
     }
     public void setMode(int mode) {
         this.mode = mode;
+    }
+
+    public void sendMode(int mode) {
         if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, mode);
     }
 
-    public void operate(int operation) {
+    public void sendLeftSpeed() {
         int speedLeft = speedMain + speedOffsetLeft;
-        int speedRight = speedMain + speedOffsetRight;
 
         if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorLeftSpeed, speedLeft);
-        if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
+    }
+
+    public void sendRightSpeed() {
+        int speedRight = speedMain + speedOffsetRight;
+
+        if(mCharacteristicMotorRightSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
+    }
+
+    public void operate(int operation) {
         if(mCharacteristicMotorDirection != null) ble.writeCharacteristic(mCharacteristicMotorDirection, operation);
     }
     public void commConnect() {

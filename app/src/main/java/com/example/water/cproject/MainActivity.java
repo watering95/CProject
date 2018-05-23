@@ -201,14 +201,16 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonAutoRun:
                 machine.setMode(machine.IS_AUTO);
                 machine.sendMode(machine.IS_AUTO);
+                makeCode();
                 break;
             case R.id.buttonAutoStop:
                 machine.setMode(machine.IS_MANUAL);
                 machine.sendMode(machine.IS_MANUAL);
+                dataCode = null;
                 break;
             case R.id.buttonForward:
                 machine.operate(machine.MOTOR_FORWARD);
-                makeCode();
+
                 break;
             case R.id.buttonStop:
                 machine.operate(machine.MOTOR_STOP);
