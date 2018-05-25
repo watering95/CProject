@@ -45,6 +45,27 @@
             android:layout_height="wrap_content"
             android:text="TextView" />
     </LinearLayout>
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*">
+        <TableRow>
+            <TextView
+                android:text="■ Angle"
+                android:layout_span="3"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:id="@+id/anglex"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/angley"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/anglez"
+                android:text="0"/>
+        </TableRow>
+    </TableLayout>
     <LinearLayout
         android:layout_marginTop="5dp"
         android:layout_width="match_parent"
@@ -64,10 +85,43 @@
     </LinearLayout>
     <SeekBar
         android:id="@+id/seekBarSpeed"
-        android:max="200"
+        android:max="100"
         android:progress="0"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:stretchColumns="*">
+        <TableRow>
+            <TextView
+                android:text="■ PID"
+                android:layout_span="3"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:text="P"
+                android:textAlignment="textEnd" />
+            <EditText
+                android:id="@+id/pid_p"
+                android:text="0"/>
+            <TextView
+                android:text="I"
+                android:textAlignment="textEnd" />
+            <EditText
+                android:id="@+id/pid_i"
+                android:text="0"/>
+            <TextView
+                android:text="D"
+                android:textAlignment="textEnd" />
+            <EditText
+                android:id="@+id/pid_d"
+                android:text="0"/>
+            <Button
+                android:id="@+id/button_pid"
+                android:text="적용"/>
+        </TableRow>
+    </TableLayout>
     <LinearLayout
         android:layout_marginTop="5dp"
         android:layout_width="match_parent"
@@ -147,8 +201,8 @@
                 android:onClick="onClick" />
             <SeekBar
                 android:id="@+id/seekBarLeftSpeed"
-                android:max="50"
-                android:progress="0"
+                android:max="100"
+                android:progress="100"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -172,8 +226,8 @@
                 android:onClick="onClick" />
             <SeekBar
                 android:id="@+id/seekBarRightSpeed"
-                android:max="50"
-                android:progress="0"
+                android:max="100"
+                android:progress="100"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </LinearLayout>
@@ -190,25 +244,5 @@
             android:onClick="onClick"
             android:layout_weight="1" />
     </LinearLayout>
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:stretchColumns="*">
-        <TableRow>
-            <TextView
-                android:text="Angle"
-                android:layout_span="3"/>
-        </TableRow>
-        <TableRow>
-            <TextView
-                android:id="@+id/anglex"
-                android:text="0"/>
-            <TextView
-                android:id="@+id/angley"
-                android:text="0"/>
-            <TextView
-                android:id="@+id/anglez"
-                android:text="0"/>
-        </TableRow>
-    </TableLayout>
+
 </LinearLayout>

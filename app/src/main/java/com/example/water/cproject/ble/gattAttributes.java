@@ -12,41 +12,45 @@ import java.util.HashMap;
 
 @SuppressWarnings("DefaultFileTemplate")
 public class gattAttributes {
-    private static final String UUID_MACHINE_SERVICE = "0000bbb0-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_MACHINE_STATE = "0000bbb1-0000-1000-8000-00805f9b34fb";
+    private static final String UUID_STATE_SERVICE = "0000bbb0-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_STATE_MACHINE = "0000bbb1-0000-1000-8000-00805f9b34fb";
 
     private static final String UUID_MOTOR_SERVICE = "00000174-0000-1000-8000-00805f9b34fb";
     public static final String UUID_MOTOR_DIRECTION = "00000175-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_MOTOR_LEFT_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_MOTOR_RIGHT_SPEED = "00000177-0000-1000-8000-00805f9b34fb";
-    public static final String UUID_IS_AUTO = "00000178-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_MOTOR_SPEED = "00000176-0000-1000-8000-00805f9b34fb";
 
-    public final static String MACHINE_STATE =
-            "com.example.bluetooth.le.ACTION";
+    private static final String UUID_OPERATE_SERVICE = "00000177-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_OPERATE_MODE = "00000178-0000-1000-8000-00805f9b34fb";
+    public static final String UUID_OPERATE_PID = "00000179-0000-1000-8000-00805f9b34fb";
+
+    public final static String STATE_MACHINE =
+            "com.example.bluetooth.le.state_machine";
     private final static String MOTOR_DIRECTION =
-            "com.example.bluetooth.le.MOTOR_DIRECTION";
-    private final static String MOTOR_LEFT_SPEED =
-            "com.example.bluetooth.le.MOTOR_LEFT_SPEED";
-    private final static String MOTOR_RIGHT_SPEED =
-            "com.example.bluetooth.le.MOTOR_RIGHT_SPEED";
-    private final static String MOTOR_IS_AUTO =
-            "com.example.bluetooth.le.IS_AUTO";
+            "com.example.bluetooth.le.motor_direction";
+    private final static String MOTOR_SPEED =
+            "com.example.bluetooth.le.motor_speed";
+    private final static String OPERATE_MODE =
+            "com.example.bluetooth.le.operate_mode";
+    private final static String OPERATE_PID =
+            "com.example.bluetooth.le.operate_pid";
 
     private final static String EXTRA_DATA =
-            "com.example.bluetooth.le.EXTRA_DATA";
+            "com.example.bluetooth.le.extra_data";
 
     @SuppressWarnings("unchecked")
     private static final HashMap<String, String> attributes = new HashMap();
 
     static {
-        attributes.put(UUID_MACHINE_SERVICE, "Machine Service");
-        attributes.put(UUID_MACHINE_STATE, "Motor State");
+        attributes.put(UUID_STATE_SERVICE, "Machine Service");
+        attributes.put(UUID_STATE_MACHINE, "Machine State");
 
         attributes.put(UUID_MOTOR_SERVICE, "Motor Service");
         attributes.put(UUID_MOTOR_DIRECTION, "Motor Direction");
-        attributes.put(UUID_MOTOR_LEFT_SPEED, "Motor Left Speed");
-        attributes.put(UUID_MOTOR_RIGHT_SPEED, "Motor Right Speed");
-        attributes.put(UUID_IS_AUTO, "Auto mode");
+        attributes.put(UUID_MOTOR_SPEED, "Motor Speed");
+
+        attributes.put(UUID_OPERATE_SERVICE, "Operate Service");
+        attributes.put(UUID_OPERATE_MODE, "Auto mode");
+        attributes.put(UUID_OPERATE_PID, "PID Gain");
     }
 
     static String lookup(String uuid, String defaultName) {
@@ -61,17 +65,17 @@ public class gattAttributes {
             case UUID_MOTOR_DIRECTION:
                 intent.putExtra(MOTOR_DIRECTION, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
                 break;
-            case UUID_MOTOR_LEFT_SPEED:
-                intent.putExtra(MOTOR_LEFT_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+            case UUID_MOTOR_SPEED:
+                intent.putExtra(MOTOR_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
                 break;
-            case UUID_MOTOR_RIGHT_SPEED:
-                intent.putExtra(MOTOR_RIGHT_SPEED, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+            case UUID_OPERATE_MODE:
+                intent.putExtra(OPERATE_MODE, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
                 break;
-            case UUID_IS_AUTO:
-                intent.putExtra(MOTOR_IS_AUTO, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
+            case UUID_OPERATE_PID:
+                intent.putExtra(OPERATE_PID, String.valueOf(changeIntByteOrder(data,ByteOrder.LITTLE_ENDIAN)));
                 break;
-            case UUID_MACHINE_STATE:
-                intent.putExtra(MACHINE_STATE, data);
+            case UUID_STATE_MACHINE:
+                intent.putExtra(STATE_MACHINE, data);
                 break;
             default:
                 // For all other profiles, writes the imu formatted in HEX.

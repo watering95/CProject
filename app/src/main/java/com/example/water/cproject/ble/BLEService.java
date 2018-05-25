@@ -218,6 +218,39 @@ public class BLEService extends Service {
         }
         if(success) Log.i(TAG, "Succeed to write characteristic : " + i );
     }
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] data) {
+        boolean success = false;
+        int i=0;
+
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        if (characteristic == null) {
+            Log.d("characteristic null", "bb");
+            return;
+        }
+        if (connectionState == STATE_DISCONNECTED) {
+            return;
+        }
+
+        ByteBuffer b = ByteBuffer.allocate(20);
+        b.order(ByteOrder.LITTLE_ENDIAN).put(data);
+
+        characteristic.setValue(b.array());
+        characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+
+        while(!success) {
+            success = bluetoothGatt.writeCharacteristic(characteristic);
+            if(i > 5) {
+                Log.i(TAG, "Fail to write characteristic");
+                break;
+            }
+            i++;
+        }
+        if(success) Log.i(TAG, "Succeed to write characteristic : " + i );
+    }
 
     /**
      * Retrieves a list of supported GATT services on the connected device. This should be

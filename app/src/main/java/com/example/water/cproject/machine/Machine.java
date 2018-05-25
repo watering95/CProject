@@ -10,6 +10,7 @@ import com.example.water.cproject.ble.gattAttributes;
 import com.example.water.cproject.genuino.Genuino101;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by water on 2017-04-19.
@@ -30,13 +31,14 @@ public class Machine {
     private final BLE ble = genuino.getBLE();
 
     private BluetoothGattCharacteristic mCharacteristicMotorDirection;
-    private BluetoothGattCharacteristic mCharacteristicMotorLeftSpeed;
-    private BluetoothGattCharacteristic mCharacteristicMotorRightSpeed;
-    private BluetoothGattCharacteristic mCharacteristicIsAuto;
-    private BluetoothGattCharacteristic mCharacteristicMachineState;
+    private BluetoothGattCharacteristic mCharacteristicMotorSpeed;
+    private BluetoothGattCharacteristic mCharacteristicOperateMode;
+    private BluetoothGattCharacteristic mCharacteristicOperatePIDGain;
+    private BluetoothGattCharacteristic mCharacteristicStateMachine;
 
-    private int speedMain = 0, speedOffsetLeft, speedOffsetRight;
+    private int speedMain = 0, speedOffsetLeft = 100, speedOffsetRight = 100;
     private int state, mode;
+    private int[] pid = {0, 0, 0};
 
     public Machine() {
 
@@ -52,7 +54,10 @@ public class Machine {
         return this.state;
     }
     public int getMode() {
-        return mode;
+        return this.mode;
+    }
+    public int[] getPID() {
+        return this.pid;
     }
 
     public void setRunSpeed(int speed) {
@@ -70,21 +75,26 @@ public class Machine {
     public void setMode(int mode) {
         this.mode = mode;
     }
+    public void setPID(int p, int i, int d) {
+        this.pid[0] = p;
+        this.pid[1] = i;
+        this.pid[2] = d;
+    }
 
     public void sendMode(int mode) {
-        if(mCharacteristicIsAuto != null) ble.writeCharacteristic(mCharacteristicIsAuto, mode);
+        if(mCharacteristicOperateMode != null) ble.writeCharacteristic(mCharacteristicOperateMode, mode);
     }
+    public void sendSpeed() {
+        int speedLeft = speedMain * (speedOffsetLeft / 100);
+        int speedRight = speedMain * (speedOffsetRight / 100);
 
-    public void sendLeftSpeed() {
-        int speedLeft = speedMain + speedOffsetLeft;
+        String speed = String.format(Locale.getDefault(),"%03d,%03d",speedLeft,speedRight);
 
-        if(mCharacteristicMotorLeftSpeed != null) ble.writeCharacteristic(mCharacteristicMotorLeftSpeed, speedLeft);
+        if(mCharacteristicMotorSpeed != null) ble.writeCharacteristic(mCharacteristicMotorSpeed, speed.getBytes());
     }
-
-    public void sendRightSpeed() {
-        int speedRight = speedMain + speedOffsetRight;
-
-        if(mCharacteristicMotorRightSpeed != null) ble.writeCharacteristic(mCharacteristicMotorRightSpeed, speedRight);
+    public void sendPID() {
+        String strPID = String.format(Locale.getDefault(),"%03d,%03d,%03d",pid[0],pid[1],pid[2]);
+        if(mCharacteristicOperatePIDGain != null) ble.writeCharacteristic(mCharacteristicOperatePIDGain, strPID.getBytes());
     }
 
     public void operate(int operation) {
@@ -108,11 +118,11 @@ public class Machine {
     }
 
     public void readMachineState() {
-        ble.readCharacteristic(mCharacteristicMachineState);
+        ble.readCharacteristic(mCharacteristicStateMachine);
     }
     public IntentFilter makeGattUpdateIntentFilter() {
         IntentFilter intentFilter = ble.makeGattUpdateIntentFilter();
-        intentFilter.addAction(IMUService.ACTION);
+        intentFilter.addAction(MachineService.ACTION);
         return intentFilter;
     }
 
@@ -135,17 +145,17 @@ public class Machine {
                     case gattAttributes.UUID_MOTOR_DIRECTION:
                         mCharacteristicMotorDirection = gattCharacteristic;
                         break;
-                    case gattAttributes.UUID_MOTOR_LEFT_SPEED:
-                        mCharacteristicMotorLeftSpeed = gattCharacteristic;
+                    case gattAttributes.UUID_MOTOR_SPEED:
+                        mCharacteristicMotorSpeed = gattCharacteristic;
                         break;
-                    case gattAttributes.UUID_MOTOR_RIGHT_SPEED:
-                        mCharacteristicMotorRightSpeed = gattCharacteristic;
+                    case gattAttributes.UUID_OPERATE_PID:
+                        mCharacteristicOperatePIDGain = gattCharacteristic;
                         break;
-                    case gattAttributes.UUID_IS_AUTO:
-                        mCharacteristicIsAuto = gattCharacteristic;
+                    case gattAttributes.UUID_OPERATE_MODE:
+                        mCharacteristicOperateMode = gattCharacteristic;
                         break;
-                    case gattAttributes.UUID_MACHINE_STATE:
-                        mCharacteristicMachineState = gattCharacteristic;
+                    case gattAttributes.UUID_STATE_MACHINE:
+                        mCharacteristicStateMachine = gattCharacteristic;
                         break;
                 }
             }

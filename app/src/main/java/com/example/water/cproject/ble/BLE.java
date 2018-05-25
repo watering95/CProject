@@ -67,6 +67,10 @@ public class BLE {
         sleep(10);
         BLEService.writeCharacteristic(characteristic, data);
     }
+    public void writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] data) {
+        sleep(10);
+        BLEService.writeCharacteristic(characteristic, data);
+    }
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         if(characteristic != null) {
             final int charaProp = characteristic.getProperties();

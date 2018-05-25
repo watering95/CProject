@@ -28,7 +28,7 @@
             </intent-filter>
         </activity>
         <service android:name=".ble.BLEService" />
-        <service android:name=".machine.IMUService" />
+        <service android:name=".machine.MachineService" />
 
         <provider
             android:name=".DBProvider"

@@ -32,7 +32,7 @@ import com.example.water.cproject.ble.BLEService;
 import com.example.water.cproject.fragment.Fragment1;
 import com.example.water.cproject.fragment.Fragment2;
 import com.example.water.cproject.genuino.IMU;
-import com.example.water.cproject.machine.IMUService;
+import com.example.water.cproject.machine.MachineService;
 import com.example.water.cproject.machine.Machine;
 
 import java.util.ArrayList;
@@ -465,8 +465,8 @@ public class MainActivity extends AppCompatActivity {
                     machine.getGattServices();
                     machine.readMachineState();
                     break;
-                case IMUService.ACTION:
-                    Bundle bundle = intent.getBundleExtra(IMUService.DATA);
+                case MachineService.ACTION:
+                    Bundle bundle = intent.getBundleExtra(MachineService.DATA);
 
                     int mode = bundle.getInt("mode");
                     int state = bundle.getInt("state");

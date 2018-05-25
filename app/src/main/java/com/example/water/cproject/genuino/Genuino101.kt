@@ -7,7 +7,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import com.example.water.cproject.ble.BLE
-import com.example.water.cproject.machine.IMUService
+import com.example.water.cproject.machine.MachineService
 
 /**
  * Created by water on 2017-04-18.
@@ -19,7 +19,7 @@ class Genuino101 {
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
-            val imuService = (service as com.example.water.cproject.machine.IMUService.LocalBinder).service
+            val imuService = (service as MachineService.LocalBinder).service
             imuService.initialize()
         }
 
@@ -31,7 +31,7 @@ class Genuino101 {
     }
 
     fun bindService(context: Context) {
-        val gattServiceIntent = Intent(context, IMUService::class.java)
+        val gattServiceIntent = Intent(context, MachineService::class.java)
         context.bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE)
     }
 }

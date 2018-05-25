@@ -6,6 +6,8 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -27,7 +29,6 @@ public class Fragment1 extends Fragment {
     private BLE ble;
     private Machine machine;
     private View mView;
-    private MainActivity mainActivity;
     private TextView peripheralName;
     private TextView peripheralAddress;
     private TextView machineStatus;
@@ -35,6 +36,7 @@ public class Fragment1 extends Fragment {
     private TextView machineState;
     private TextView machineMode;
     private TextView angleX, angleY, angleZ;
+    private EditText pidP, pidI, pidD;
 
     public Fragment1() {
     }
@@ -43,7 +45,7 @@ public class Fragment1 extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mainActivity = (MainActivity) getActivity();
+        MainActivity mainActivity = (MainActivity) getActivity();
         assert mainActivity != null;
         this.machine = mainActivity.machine;
         this.ble = machine.getControlBoard().getBLE();
@@ -137,6 +139,27 @@ public class Fragment1 extends Fragment {
         angleY = mView.findViewById(R.id.angley);
         angleZ = mView.findViewById(R.id.anglez);
 
+        pidP = mView.findViewById(R.id.pid_p);
+        pidI = mView.findViewById(R.id.pid_i);
+        pidD = mView.findViewById(R.id.pid_d);
+
+        int[] pid = machine.getPID();
+        pidP.setText(String.format(Locale.getDefault(),"%d",pid[0]));
+        pidI.setText(String.format(Locale.getDefault(),"%d",pid[1]));
+        pidD.setText(String.format(Locale.getDefault(),"%d",pid[2]));
+
+        Button btnPID = mView.findViewById(R.id.button_pid);
+        btnPID.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int p = Integer.valueOf(pidP.getText().toString());
+                int i = Integer.valueOf(pidI.getText().toString());
+                int d = Integer.valueOf(pidD.getText().toString());
+                machine.setPID(p, i, d);
+                machine.sendPID();
+            }
+        });
+
         SeekBar sbSpeed = mView.findViewById(R.id.seekBarSpeed);
         SeekBar sbSpeedLeft = mView.findViewById(R.id.seekBarLeftSpeed);
         SeekBar sbSpeedRight = mView.findViewById(R.id.seekBarRightSpeed);
@@ -145,8 +168,6 @@ public class Fragment1 extends Fragment {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 machine.setRunSpeed(progress);
-                machine.sendLeftSpeed();
-                machine.sendRightSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -157,13 +178,13 @@ public class Fragment1 extends Fragment {
                 int progress;
                 progress = machine.getRunSpeed();
                 machineSpeed.setText(String.valueOf(progress));
+                machine.sendSpeed();
             }
         });
         sbSpeedLeft.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 machine.setSpeedOffsetLeft(progress);
-                machine.sendLeftSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -171,14 +192,13 @@ public class Fragment1 extends Fragment {
             }
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                machine.sendSpeed();
             }
         });
         sbSpeedRight.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 machine.setSpeedOffsetRight(progress);
-                machine.sendRightSpeed();
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -186,7 +206,7 @@ public class Fragment1 extends Fragment {
             }
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                machine.sendSpeed();
             }
         });
     }
