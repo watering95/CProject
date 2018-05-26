@@ -170,7 +170,7 @@ public class Fragment1 extends Fragment {
                 edit.putInt("P",p);
                 edit.putInt("I",i);
                 edit.putInt("D",d);
-                edit.commit();
+                edit.apply();
             }
         });
 

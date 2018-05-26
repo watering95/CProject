@@ -453,6 +453,7 @@ public class MainActivity extends AppCompatActivity {
                     scanBLEDevice(SCAN_STOP);
                     displayConnectionState(R.string.ble_connected);
                     invalidateOptionsMenu();
+                    machine.sendPID();
                     break;
                 case BLEService.ACTION_GATT_DISCONNECTED:
                     displayConnectionState(R.string.ble_disconnected);
