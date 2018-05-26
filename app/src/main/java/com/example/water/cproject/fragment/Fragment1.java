@@ -1,5 +1,6 @@
 package com.example.water.cproject.fragment;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -37,6 +38,7 @@ public class Fragment1 extends Fragment {
     private TextView machineMode;
     private TextView angleX, angleY, angleZ;
     private EditText pidP, pidI, pidD;
+    private SharedPreferences pref;
 
     public Fragment1() {
     }
@@ -49,6 +51,7 @@ public class Fragment1 extends Fragment {
         assert mainActivity != null;
         this.machine = mainActivity.machine;
         this.ble = machine.getControlBoard().getBLE();
+        pref = mainActivity.getSharedPreferences("PID",0);
 
         mainActivity.setFrag1Callback(new MainActivity.Frag1Callback() {
             @Override
@@ -143,7 +146,12 @@ public class Fragment1 extends Fragment {
         pidI = mView.findViewById(R.id.pid_i);
         pidD = mView.findViewById(R.id.pid_d);
 
-        int[] pid = machine.getPID();
+        int[] pid = new int[3];
+        pid[0] = pref.getInt("P",1);
+        pid[1] = pref.getInt("I",100);
+        pid[2] = pref.getInt("D",2);
+
+        machine.setPID(pid[0], pid[1], pid[2]);
         pidP.setText(String.format(Locale.getDefault(),"%d",pid[0]));
         pidI.setText(String.format(Locale.getDefault(),"%d",pid[1]));
         pidD.setText(String.format(Locale.getDefault(),"%d",pid[2]));
@@ -157,6 +165,12 @@ public class Fragment1 extends Fragment {
                 int d = Integer.valueOf(pidD.getText().toString());
                 machine.setPID(p, i, d);
                 machine.sendPID();
+                SharedPreferences.Editor edit = pref.edit();
+
+                edit.putInt("P",p);
+                edit.putInt("I",i);
+                edit.putInt("D",d);
+                edit.commit();
             }
         });
 
